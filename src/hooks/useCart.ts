@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { cartService } from '@/services/cart.service'
 import { useCartStore } from '@/store/cart.store'
 import { useAuthStore } from '@/store/auth.store'
-import { useAllocatedStoreId } from '@/hooks/useStoreContext'
 import { keys, STALE } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import type { Cart } from '@/types/cart.types'
@@ -21,7 +20,6 @@ export interface PendingCrossStoreAdd {
 export function useCart() {
     const qc = useQueryClient()
     const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
-    const userId = useAuthStore((s) => s.user?.id ?? '')
     const cartStore = useCartStore()
 
     // Use the simple cart key — cart API is scoped by JWT, not by storeId

@@ -262,9 +262,9 @@ export const ProductCard = React.memo(function ProductCard({
                             outOfStock={outOfStock || isInactive}
                             isAdding={isAdding}
                             isUpdating={isUpdating}
-                            addToCart={(id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
-                            updateQty={(id, n) => updateQty(shopProductId, n)}
-                            removeFromCart={(id) => removeFromCart(shopProductId)}
+                            addToCart={(_id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
+                            updateQty={(_id, n) => updateQty(shopProductId, n)}
+                            removeFromCart={(_id) => removeFromCart(shopProductId)}
                         />
                     </div>
                 </div>
@@ -360,9 +360,9 @@ export const ProductCard = React.memo(function ProductCard({
                         outOfStock={outOfStock || isInactive}
                         isAdding={isAdding}
                         isUpdating={isUpdating}
-                        addToCart={(id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
-                        updateQty={(id, n) => updateQty(shopProductId, n)}
-                        removeFromCart={(id) => removeFromCart(shopProductId)}
+                        addToCart={(_id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
+                        updateQty={(_id, n) => updateQty(shopProductId, n)}
+                        removeFromCart={(_id) => removeFromCart(shopProductId)}
                     />
                 </div>
             </div>
