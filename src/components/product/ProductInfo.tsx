@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronDown, RotateCcw, Shield, Sparkles, Truck, Users } from 'lucide-react'
+import { ArrowLeft, ChevronDown, RotateCcw, Shield, Sparkles, Store, Truck, Users } from 'lucide-react'
 import { AddToCartSection } from '@/components/product/AddToCartSection'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/hooks/useCart'
@@ -32,20 +32,28 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
     const { addToCart } = useCart()
     const [descExpanded, setDescExpanded] = useState(false)
 
-    const salePrice = product.sale_price ?? product.salePrice ?? null
+    const salePrice = product.shop_price ?? product.sale_price ?? product.salePrice ?? null
     const isOnSale = salePrice !== null && salePrice < product.price
     const displayPrice = isOnSale ? salePrice : product.price
     const discount = isOnSale ? discountPercent(product.price, salePrice) : null
     const reviewCount = reviewSummary.totalReviews
     const averageRating = reviewSummary.averageRating
+    const effectiveStock = product.shop_stock ?? product.stock_quantity
     const buyerCount = Math.max(
         reviewCount > 0 ? reviewCount * 3 : 0,
         Math.min(product.total_sold, 1200),
-        product.stock_quantity > 0 ? 24 : 0,
+        effectiveStock > 0 ? 24 : 0,
     )
 
+    const shopProductId = product.shop_product_id ?? product.id
+
     const handleShopNow = () => {
-        addToCart(product.id, 1)
+        addToCart(
+            shopProductId,
+            1,
+            product.shop_id ?? undefined,
+            product.shop_name ?? undefined,
+        )
         router.push('/cart')
     }
 
@@ -89,6 +97,12 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
                 <h1 className="text-[28px] font-extrabold leading-[1.15] text-[color:var(--shop-ink)] lg:text-[32px]">
                     {product.name}
                 </h1>
+                {product.shop_name && (
+                    <p className="text-xs text-gray-500 mt-1">
+                        <Store className="inline h-3 w-3 mr-1" />
+                        Sold by <span className="font-medium text-gray-700">{product.shop_name}</span>
+                    </p>
+                )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[color:var(--shop-border)] bg-white/80 px-4 py-3">
@@ -142,12 +156,12 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
             </div>
 
             <div className="flex items-center gap-2">
-                {product.stock_quantity > 0 ? (
+                {effectiveStock > 0 ? (
                     <>
                         <div className="pulse-dot h-2 w-2 rounded-full bg-[color:var(--shop-primary)]" />
                         <span className="text-sm font-medium text-[color:var(--shop-primary)]">
-                            {product.stock_quantity < 10
-                                ? `Only ${product.stock_quantity} left — hurry!`
+                            {effectiveStock < 10
+                                ? `Only ${effectiveStock} left — hurry!`
                                 : 'In Stock'}
                         </span>
                     </>
@@ -161,7 +175,7 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
 
             <div className="space-y-3">
                 <AddToCartSection product={product} />
-                {product.stock_quantity > 0 && (
+                {effectiveStock > 0 && (
                     <Button
                         size="lg"
                         onClick={handleShopNow}

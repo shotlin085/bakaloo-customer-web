@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Tag, X } from 'lucide-react'
 import { couponsService } from '@/services/coupons.service'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
+import { useStoreContext } from '@/store/store.context'
 import { formatDate, formatINR } from '@/lib/utils'
 
 interface CouponSheetProps {
@@ -43,12 +44,13 @@ export function CouponSheet({
     onRemove,
 }: CouponSheetProps) {
     const [manualCode, setManualCode] = useState('')
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.coupons(),
-        queryFn: couponsService.getAvailable,
+        queryKey: keys.coupons(storeId ?? ''),
+        queryFn: () => couponsService.getAvailable(storeId!),
         staleTime: 5 * 60 * 1000,
-        enabled: isOpen,
+        enabled: isOpen && Boolean(storeId),
     })
 
     const coupons = useMemo(() => (Array.isArray(data) ? (data as CouponItem[]) : []), [data])

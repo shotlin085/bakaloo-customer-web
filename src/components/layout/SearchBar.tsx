@@ -6,6 +6,7 @@ import { Search, X, Loader2, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSearchStore } from '@/store/search.store'
 import { productsService } from '@/services/products.service'
+import { useStoreContext } from '@/store/store.context'
 import { SEARCH_DEBOUNCE_MS } from '@/lib/constants'
 import type { Product } from '@/types/product.types'
 
@@ -39,6 +40,7 @@ export function SearchBar() {
     const [activeIndex, setActiveIndex] = useState(-1)
     const wrapperRef = useRef<HTMLDivElement>(null)
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
 
     const { recentSearches, addSearch, removeSearch } = useSearchStore()
 
@@ -49,10 +51,16 @@ export function SearchBar() {
             return
         }
 
+        if (!storeId) {
+            setResults([])
+            setSuggestions([])
+            return
+        }
+
         setIsSearching(true)
 
         try {
-            const response = await productsService.search(value, 1)
+            const response = await productsService.searchShopProducts(storeId, value, 1)
             setResults(response.products.slice(0, 6))
             setSuggestions(response.suggestions?.slice(0, 4) ?? [])
         } catch {
@@ -61,7 +69,7 @@ export function SearchBar() {
         } finally {
             setIsSearching(false)
         }
-    }, [])
+    }, [storeId])
 
     useEffect(() => {
         if (timerRef.current) clearTimeout(timerRef.current)

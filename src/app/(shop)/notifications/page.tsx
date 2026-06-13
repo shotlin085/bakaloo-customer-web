@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { notificationsService } from '@/services/notifications.service'
 import { timeAgo, cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -32,14 +32,14 @@ export default function NotificationsPage() {
     }, [])
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.notifications(),
+        queryKey: keys.notifications(),
         queryFn: () => notificationsService.getAll(),
     })
 
     const markAllRead = useMutation({
         mutationFn: notificationsService.markAllRead,
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: QUERY_KEYS.notifications() })
+            qc.invalidateQueries({ queryKey: keys.notifications() })
             toast.success('All marked as read')
         },
     })
@@ -55,7 +55,7 @@ export default function NotificationsPage() {
         try {
             if (!notif.is_read) {
                 await notificationsService.markAsRead(notif.id)
-                qc.invalidateQueries({ queryKey: QUERY_KEYS.notifications() })
+                qc.invalidateQueries({ queryKey: keys.notifications() })
             }
         } catch {
             toast.error('Could not open notification')

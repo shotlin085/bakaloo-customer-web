@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Minus, Package2, Plus, Trash2, X } from 'lucide-react'
+import { Minus, Package2, Plus, Store, Trash2, X } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
 import type { CartItem as CartItemType } from '@/types/cart.types'
 import {
@@ -133,6 +133,14 @@ export function CartItemMobile({ item, onQtyChange, onRemove }: CartItemMobilePr
                         <Link href={href} className="block text-[16px] font-semibold leading-[1.28] text-[#16202A]">
                             <span className="line-clamp-2">{item.name}</span>
                         </Link>
+
+                        {item.storeName && (
+                            <span className="text-[10px] text-gray-400 mt-1 block">
+                                <Store className="inline h-2.5 w-2.5 mr-0.5" />
+                                {item.storeName}
+                            </span>
+                        )}
+
                         <p className="mt-1.5 text-sm font-semibold text-[#166534]">{formatINR(item.price)} each</p>
 
                         {isDiscounted && (
@@ -151,7 +159,7 @@ export function CartItemMobile({ item, onQtyChange, onRemove }: CartItemMobilePr
                                     </p>
                                 )}
                                 <motion.p
-                                    key={`${item.productId}-${item.quantity}`}
+                                    key={`${item.shopProductId}-${item.quantity}`}
                                     initial={reduceMotion ? false : { y: 8, opacity: 0 }}
                                     animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
                                     className="mt-1 text-[22px] font-bold tracking-[-0.04em] text-[#16202A]"

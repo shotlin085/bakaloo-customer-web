@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store/auth.store'
 import { useQuery } from '@tanstack/react-query'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
 import { formatINR } from '@/lib/utils'
 import { authService } from '@/services/auth.service'
 import { ReferralCard } from '@/components/profile/ReferralCard'
@@ -39,9 +39,9 @@ export default function ProfilePage() {
     }, [])
 
     const { data: stats } = useQuery({
-        queryKey: [...QUERY_KEYS.user, 'stats'],
+        queryKey: keys.userStats(),
         queryFn: authService.getStats,
-        staleTime: STALE_TIMES.user,
+        staleTime: STALE.user,
     })
 
     const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'U'

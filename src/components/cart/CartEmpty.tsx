@@ -7,18 +7,23 @@ import { ArrowRight, ShoppingBag } from 'lucide-react'
 import { ProductSectionRow } from '@/components/home/ProductSectionRow'
 import { categoriesService } from '@/services/categories.service'
 import { productsService } from '@/services/products.service'
+import { useStoreContext } from '@/store/store.context'
 
 export function CartEmpty() {
     const reduceMotion = useReducedMotion()
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
+
     const { data: featured = [] } = useQuery({
-        queryKey: ['cart-empty-featured'],
+        queryKey: ['cart-empty-featured', storeId],
         queryFn: () => productsService.getFeatured(6),
         staleTime: 5 * 60 * 1000,
+        enabled: Boolean(storeId),
     })
     const { data: categories = [] } = useQuery({
-        queryKey: ['cart-empty-categories'],
-        queryFn: categoriesService.getAll,
+        queryKey: ['cart-empty-categories', storeId],
+        queryFn: () => categoriesService.getForStore(),
         staleTime: 30 * 60 * 1000,
+        enabled: Boolean(storeId),
     })
 
     return (

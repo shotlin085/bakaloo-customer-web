@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { couponsService } from '@/services/coupons.service'
 import { formatINR } from '@/lib/utils'
 import { useCouponStore, type AppliedCoupon } from '@/store/coupon.store'
+import { useStoreContext } from '@/store/store.context'
 
 const EMPTY_COUPON: AppliedCoupon = {
     code: null,
@@ -49,6 +50,7 @@ export function useCoupon(cartSubtotal: number) {
     const storedCoupon = useCouponStore((s) => s.coupon)
     const setStoredCoupon = useCouponStore((s) => s.setCoupon)
     const clearStoredCoupon = useCouponStore((s) => s.clearCoupon)
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
     const [isValidating, setIsValidating] = useState(false)
 
     const normalizedSubtotal = useMemo(() => Math.max(0, Number(cartSubtotal) || 0), [cartSubtotal])
@@ -85,7 +87,7 @@ export function useCoupon(cartSubtotal: number) {
             setIsValidating(true)
 
             try {
-                const result = await couponsService.validate(normalizedCode, normalizedSubtotal)
+                const result = await couponsService.validate(normalizedCode, normalizedSubtotal, storeId ?? '')
                 if (!result.valid) {
                     toast.error(result.message ?? 'Invalid coupon code')
                     return
@@ -111,7 +113,7 @@ export function useCoupon(cartSubtotal: number) {
                 setIsValidating(false)
             }
         },
-        [normalizedSubtotal, setStoredCoupon],
+        [normalizedSubtotal, setStoredCoupon, storeId],
     )
 
     const removeCoupon = useCallback(() => {

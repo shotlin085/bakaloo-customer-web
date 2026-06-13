@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2, Plus } from 'lucide-react'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { addressesService } from '@/services/addresses.service'
 import { AddressForm } from '@/components/profile/AddressForm'
 import type { Address, CreateAddressPayload } from '@/types/address.types'
@@ -18,15 +18,15 @@ export function AddressStep({ selectedId, onSelect }: AddressStepProps) {
     const qc = useQueryClient()
     const [showForm, setShowForm] = useState(false)
 
-    const { data: addresses = [], isLoading } = useQuery({
-        queryKey: QUERY_KEYS.addresses,
+    const { data: addresses = [], isLoading } = useQuery<Address[]>({
+        queryKey: keys.addresses(),
         queryFn: () => addressesService.getAll(),
     })
 
     const createAddress = useMutation({
         mutationFn: (payload: CreateAddressPayload) => addressesService.create(payload),
         onSuccess: (address) => {
-            void qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+            void qc.invalidateQueries({ queryKey: keys.addresses() })
             onSelect(address)
             setShowForm(false)
         },

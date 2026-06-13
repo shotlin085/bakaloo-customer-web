@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
 import { categoriesService } from '@/services/categories.service'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
+import { useStoreContext } from '@/store/store.context'
 import { EmptyStateCard, PageHeader, PageShell } from '@/components/shared'
 import type { Category } from '@/types/product.types'
 import { useEffect } from 'react'
@@ -46,13 +47,16 @@ export default function CategoriesPage() {
         document.title = 'Categories — Bakaloo'
     }, [])
 
-    const { data: allCategories = [], isLoading } = useQuery({
-        queryKey: QUERY_KEYS.categories,
-        queryFn: categoriesService.getAll,
-        staleTime: STALE_TIMES.categories,
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
+
+    const { data: allCategories = [], isLoading } = useQuery<Category[]>({
+        queryKey: keys.categories(storeId ?? ''),
+        queryFn: () => categoriesService.getForStore(),
+        staleTime: STALE.categories,
+        enabled: Boolean(storeId),
     })
 
-    const categories = allCategories.filter(
+    const categories = (allCategories as Category[]).filter(
         (c: Category) => c.is_active && !c.parent_id,
     )
 
@@ -101,7 +105,7 @@ export default function CategoriesPage() {
                     />
                 ) : (
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                        {categories.map((cat, i) => {
+                        {categories.map((cat: Category, i: number) => {
                             const style = getStyle(cat.name)
                             return (
                                 <Link

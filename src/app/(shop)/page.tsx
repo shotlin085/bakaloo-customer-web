@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { bannersService } from '@/services/banners.service'
 import { categoriesService } from '@/services/categories.service'
@@ -13,42 +14,54 @@ import { HomeSectionHeader } from '@/components/home/HomeSectionHeader'
 import { HomeTrendingGrid } from '@/components/home/HomeTrendingGrid'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { LocationRequired } from '@/components/shared/LocationRequired'
+import { LocationModal } from '@/components/store/LocationModal'
+import { keys, STALE } from '@/lib/queryKeys'
+import { useStoreContext } from '@/store/store.context'
 import { getHomepageCategoryGrid, getTrendingProducts } from '@/lib/shopfront/shopfront-home.utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Category, Product } from '@/types/product.types'
 
 export default function HomePage() {
+  const storeId = useStoreContext((s) => s.allocatedStoreId)
+  const hasStore = Boolean(storeId)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+
   const { data: banners = [], isLoading: loadingBanners } = useQuery({
-    queryKey: QUERY_KEYS.banners,
-    queryFn: bannersService.getActive,
-    staleTime: STALE_TIMES.banners,
+    queryKey: keys.banners(storeId ?? ''),
+    queryFn: () => bannersService.getForStore(),
+    staleTime: STALE.banners,
+    enabled: hasStore,
   })
 
   const { data: allCategories = [], isLoading: loadingCategories } = useQuery({
-    queryKey: QUERY_KEYS.categories,
-    queryFn: categoriesService.getAll,
-    staleTime: STALE_TIMES.categories,
+    queryKey: keys.categories(storeId ?? ''),
+    queryFn: () => categoriesService.getForStore(),
+    staleTime: STALE.categories,
+    enabled: hasStore,
   })
 
   const categories = getHomepageCategoryGrid(allCategories as Category[], 6)
 
   const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
-    queryKey: ['products', 'featured'],
+    queryKey: keys.featuredProducts(storeId ?? ''),
     queryFn: () => productsService.getFeatured(12),
-    staleTime: STALE_TIMES.products,
+    staleTime: STALE.products,
+    enabled: hasStore,
   })
 
   const { data: newArrivals = [], isLoading: loadingNewArrivals } = useQuery({
-    queryKey: ['products', 'new-arrivals'],
+    queryKey: keys.newArrivals(storeId ?? ''),
     queryFn: () => productsService.getNewArrivals(12),
-    staleTime: STALE_TIMES.products,
+    staleTime: STALE.products,
+    enabled: hasStore,
   })
 
   const { data: dealProducts = [], isLoading: loadingDeals } = useQuery({
-    queryKey: ['products', 'deals'],
+    queryKey: keys.dealsProducts(storeId ?? ''),
     queryFn: () => productsService.getDeals(12),
-    staleTime: STALE_TIMES.products,
+    staleTime: STALE.products,
+    enabled: hasStore,
   })
 
   const trendingProducts = getTrendingProducts({
@@ -60,6 +73,13 @@ export default function HomePage() {
 
   return (
     <div className="pb-8">
+      {!hasStore && !loadingBanners && !loadingCategories ? (
+        <>
+          <LocationRequired onSetLocation={() => setLocationModalOpen(true)} />
+          <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
+        </>
+      ) : (
+        <>
       {loadingBanners ? (
         <HomeHeroMosaicSkeleton />
       ) : banners.length > 0 ? (
@@ -130,6 +150,8 @@ export default function HomePage() {
       )}
 
       {!loadingFeatured && featuredProducts.length === 0 && <AllProductsSection />}
+        </>
+      )}
     </div>
   )
 }
@@ -138,7 +160,7 @@ function AllProductsSection() {
   const { data, isLoading } = useQuery({
     queryKey: ['products', 'all-home'],
     queryFn: () => productsService.getAll({ limit: 20 }),
-    staleTime: STALE_TIMES.products,
+    staleTime: STALE.products,
   })
 
   const products = data?.products ?? []

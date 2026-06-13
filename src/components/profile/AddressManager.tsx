@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Edit2, MapPin, Plus, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import { addressesService } from '@/services/addresses.service'
 import type { Address, CreateAddressPayload } from '@/types/address.types'
@@ -30,15 +30,15 @@ export function AddressManager() {
     const [editId, setEditId] = useState<string | null>(null)
     const [showAdd, setShowAdd] = useState(false)
 
-    const { data: addresses = [], isLoading } = useQuery({
-        queryKey: QUERY_KEYS.addresses,
+    const { data: addresses = [], isLoading } = useQuery<Address[]>({
+        queryKey: keys.addresses(),
         queryFn: () => addressesService.getAll(),
     })
 
     const deleteMut = useMutation({
         mutationFn: (id: string) => addressesService.delete(id),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+            await qc.invalidateQueries({ queryKey: keys.addresses() })
             toast.success('Address deleted')
         },
     })
@@ -46,7 +46,7 @@ export function AddressManager() {
     const setDefaultMut = useMutation({
         mutationFn: (id: string) => addressesService.setDefault(id),
         onSuccess: async () => {
-            await qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+            await qc.invalidateQueries({ queryKey: keys.addresses() })
             toast.success('Default address updated')
         },
     })
@@ -55,7 +55,7 @@ export function AddressManager() {
         mutationFn: (payload: CreateAddressPayload) => addressesService.create(payload),
         onSuccess: async () => {
             setShowAdd(false)
-            await qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+            await qc.invalidateQueries({ queryKey: keys.addresses() })
             toast.success('Address added')
         },
     })
@@ -65,7 +65,7 @@ export function AddressManager() {
             addressesService.update(id, payload),
         onSuccess: async () => {
             setEditId(null)
-            await qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+            await qc.invalidateQueries({ queryKey: keys.addresses() })
             toast.success('Address updated')
         },
     })

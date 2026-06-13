@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { ShopFooter } from '@/components/layout/ShopFooter'
 import { ShopHeader } from '@/components/layout/ShopHeader'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { StoreStatusBanner } from '@/components/store/StoreStatusBanner'
 
 export default function ShopLayout({
     children,
@@ -21,6 +22,7 @@ export default function ShopLayout({
             <div className={`relative w-full ${hideFooterChrome ? 'pb-8' : 'pb-24 lg:pb-6'}`}>
                 <div className="flex min-h-screen flex-col">
                     <ShopHeader />
+                    <StoreStatusBanner />
                     <main className={`flex-1 overflow-x-hidden ${hideFooterChrome ? 'pb-6' : 'pb-10 lg:pb-4'}`}>
                         <ErrorBoundary>{children}</ErrorBoundary>
                     </main>

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ordersService } from '@/services/orders.service'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 
 interface CancelOrderDialogProps {
     isOpen: boolean
@@ -39,7 +39,7 @@ export function CancelOrderDialog({ isOpen, onClose, orderId, onCancelled }: Can
         },
         onSuccess: async () => {
             await Promise.all([
-                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.order(orderId) }),
+                queryClient.invalidateQueries({ queryKey: keys.order(orderId) }),
                 queryClient.invalidateQueries({ queryKey: ['orders'] }),
             ])
             toast.success('Order cancelled successfully')

@@ -53,6 +53,17 @@ function normalizeProduct(raw: Record<string, unknown> | null): Product | null {
         nutrition_info: (raw.nutrition_info as Record<string, string>) ?? null,
         variants: (raw.variants as Product['variants']) ?? null,
         created_at: raw.created_at != null ? String(raw.created_at) : new Date().toISOString(),
+        // Multi-vendor shop fields
+        shop_id: raw.shop_id != null ? String(raw.shop_id) : null,
+        shop_product_id: raw.shop_product_id != null ? String(raw.shop_product_id) : null,
+        shop_name: raw.shop_name != null ? String(raw.shop_name) : null,
+        shop_price: raw.shop_price != null ? Number(raw.shop_price) : null,
+        shop_stock: raw.shop_stock != null ? Number(raw.shop_stock) : null,
+        family_id: raw.family_id != null ? String(raw.family_id) : null,
+        option_label: raw.option_label != null ? String(raw.option_label) : null,
+        net_quantity: raw.net_quantity != null ? String(raw.net_quantity) : null,
+        avg_rating: raw.avg_rating != null ? Number(raw.avg_rating) : null,
+        rating_count: raw.rating_count != null ? Number(raw.rating_count) : null,
     }
 }
 
@@ -131,7 +142,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
         return { title: 'Product Not Found — Bakaloo' }
     }
 
-    const price = product.sale_price ?? product.salePrice ?? product.price
+    const price = product.shop_price ?? product.sale_price ?? product.salePrice ?? product.price
     const image = product.images?.[0] || product.thumbnail_url || '/og-default.png'
 
     return {
@@ -157,7 +168,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 function ProductJsonLd({ product }: { product: Product }) {
-    const price = product.sale_price ?? product.salePrice ?? product.price
+    const price = product.shop_price ?? product.sale_price ?? product.salePrice ?? product.price
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -201,7 +212,7 @@ export default async function ProductDetailPage({ params }: Params) {
                     </div>
                     <div className="shop-surface-soft space-y-5 rounded-[30px] p-5 sm:p-6">
                         <ProductInfo product={product} reviewSummary={reviewSummary} />
-                        <ProductDeliveryPanel />
+                        <ProductDeliveryPanel product={product} />
                     </div>
                 </div>
                 {showDetails && (

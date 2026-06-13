@@ -25,6 +25,10 @@ function normalizeOrder(raw: any): Order {
         rider: raw.rider ?? null,
         created_at: raw.created_at ?? raw.createdAt ?? '',
         updated_at: raw.updated_at ?? raw.updatedAt ?? '',
+        // Multi-vendor store attribution
+        shop_id: raw.shop_id ?? raw.shopId ?? null,
+        shop_name: raw.shop_name ?? raw.shopName ?? null,
+        store_slug: raw.store_slug ?? raw.storeSlug ?? null,
     }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

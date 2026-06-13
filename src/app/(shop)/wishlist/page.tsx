@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { wishlistService } from '@/services/wishlist.service'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGridSkeleton } from '@/components/product/ProductCardSkeleton'
@@ -21,7 +21,7 @@ export default function WishlistPage() {
     }, [])
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.wishlist(),
+        queryKey: keys.wishlist(),
         queryFn: wishlistService.get,
     })
 
@@ -35,7 +35,7 @@ export default function WishlistPage() {
         mutationFn: wishlistService.clear,
         onSuccess: () => {
             setCount(0)
-            qc.invalidateQueries({ queryKey: QUERY_KEYS.wishlist() })
+            qc.invalidateQueries({ queryKey: keys.wishlist() })
             toast.success('Wishlist cleared')
         },
     })

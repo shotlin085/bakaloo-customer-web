@@ -4,7 +4,7 @@ import { AxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
 import { walletService } from '@/services/wallet.service'
 import { loadRazorpay, openRazorpayCheckout } from '@/lib/razorpay'
 import { useAuthStore } from '@/store/auth.store'
@@ -25,15 +25,15 @@ export default function WalletPage() {
     }, [])
 
     const { data: balance, isLoading: loadingBalance } = useQuery({
-        queryKey: QUERY_KEYS.wallet,
+        queryKey: keys.wallet(),
         queryFn: walletService.getBalance,
-        staleTime: STALE_TIMES.wallet,
+        staleTime: STALE.wallet,
     })
 
     const { data: txData, isLoading: loadingTx } = useQuery({
-        queryKey: QUERY_KEYS.walletTransactions,
+        queryKey: keys.walletTransactions(),
         queryFn: () => walletService.getTransactions(),
-        staleTime: STALE_TIMES.wallet,
+        staleTime: STALE.wallet,
     })
 
     const transactions = txData?.transactions ?? []
@@ -78,8 +78,8 @@ export default function WalletPage() {
                         payment.razorpay_signature,
                     )
                     await Promise.all([
-                        qc.invalidateQueries({ queryKey: QUERY_KEYS.wallet }),
-                        qc.invalidateQueries({ queryKey: QUERY_KEYS.walletTransactions }),
+                        qc.invalidateQueries({ queryKey: keys.wallet() }),
+                        qc.invalidateQueries({ queryKey: keys.walletTransactions() }),
                     ])
                     toast.success(`₹${amountNumber.toLocaleString('en-IN')} added to wallet!`)
                     closeSheet()

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Star } from 'lucide-react'
 import { reviewsService } from '@/services/reviews.service'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { RatingStars } from '@/components/shared/RatingStars'
 import { ReviewForm } from '@/components/product/ReviewForm'
 import { useAuthStore } from '@/store/auth.store'
@@ -55,7 +55,7 @@ export function ProductReviewsSection({ productId, initialData }: ProductReviews
     }, [initialData])
 
     const { data, isLoading, isFetching, isError } = useQuery({
-        queryKey: QUERY_KEYS.reviews(productId, page),
+        queryKey: keys.reviews(productId, page),
         queryFn: () => reviewsService.getForProduct(productId, page, 6),
         enabled: Boolean(productId),
         staleTime: 2 * 60 * 1000,
@@ -63,7 +63,7 @@ export function ProductReviewsSection({ productId, initialData }: ProductReviews
     })
 
     const { data: eligibility } = useQuery({
-        queryKey: QUERY_KEYS.reviewEligibility(productId, user?.id ?? null),
+        queryKey: keys.reviewEligibility(productId, user?.id ?? ''),
         queryFn: () => reviewsService.checkEligibility(productId),
         enabled: Boolean(user?.id && productId),
         staleTime: 5 * 60 * 1000,

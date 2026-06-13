@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ordersService } from '@/services/orders.service'
-import { ORDER_STATUS_CONFIG, QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { ORDER_STATUS_CONFIG } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
 import { formatINR, formatDateTime, cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -24,9 +25,9 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     const [showCancel, setShowCancel] = useState(false)
     const [reviewProduct, setReviewProduct] = useState<{ id: string; name: string } | null>(null)
     const { data: order, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.order(params.id),
+        queryKey: keys.order(params.id),
         queryFn: () => ordersService.getById(params.id),
-        staleTime: STALE_TIMES.orders,
+        staleTime: STALE.orders,
         refetchInterval: 30_000,
     })
 

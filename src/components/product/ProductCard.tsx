@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { useCart } from '@/hooks/useCart'
 import { WishlistButton } from '@/components/product/WishlistButton'
 import { discountPercent, formatINR, cn } from '@/lib/utils'
+import { cardUrl } from '@/lib/cloudinary'
 import type { Product } from '@/types/product.types'
 
 interface Props {
@@ -164,7 +165,7 @@ export const ProductCard = React.memo(function ProductCard({
     const outOfStock = product.stock_quantity === 0
     const displayTag = formatTagLabel(product)
 
-    const imageSrc = product.thumbnail_url || product.images?.[0] || '/placeholder-product.svg'
+    const imageSrc = cardUrl(product.thumbnail_url || product.images?.[0]) || '/placeholder-product.svg'
 
     if (variant === 'section') {
         return (
@@ -212,13 +213,18 @@ export const ProductCard = React.memo(function ProductCard({
                 </Link>
 
                 <div className="mt-4 flex flex-1 flex-col">
-                    <div className="mb-2 flex items-center gap-2">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className="inline-flex rounded-full border border-[#E1E5E8] bg-white px-2.5 py-1 text-[11px] font-medium text-[#5F6972]">
-                            {formatBadgeUnit(product.unit)}
+                            {product.net_quantity ?? formatBadgeUnit(product.unit)}
                         </span>
+                        {(product.option_count ?? 0) > 1 && (
+                            <span className="inline-flex rounded-full bg-[rgba(104,72,198,0.12)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--shop-primary)]">
+                                {product.option_count} sizes
+                            </span>
+                        )}
                     </div>
 
-                    <Link href={`/products/${product.slug}`} className="block">
+                    <Link href={`/products/${product.slug}`} className="block" prefetch>
                         <p className="line-clamp-2 text-[17px] font-semibold leading-[1.28] tracking-tight text-[#16202A]">
                             {product.name}
                         </p>
@@ -305,13 +311,18 @@ export const ProductCard = React.memo(function ProductCard({
             </Link>
 
             <div className="flex flex-1 flex-col">
-                <div className="mb-2 flex items-center gap-2">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="inline-flex rounded-full border border-[#E1E5E8] bg-white px-2.5 py-1 text-[11px] font-medium text-[#5F6972]">
-                        {formatBadgeUnit(product.unit)}
+                        {product.net_quantity ?? formatBadgeUnit(product.unit)}
                     </span>
+                    {(product.option_count ?? 0) > 1 && (
+                        <span className="inline-flex rounded-full bg-[rgba(104,72,198,0.12)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--shop-primary)]">
+                            {product.option_count} sizes
+                        </span>
+                    )}
                 </div>
 
-                <Link href={`/products/${product.slug}`} className="block">
+                <Link href={`/products/${product.slug}`} className="block" prefetch>
                     <p className="line-clamp-2 text-[17px] font-semibold leading-tight tracking-tight text-[#16202A]">
                         {product.name}
                     </p>

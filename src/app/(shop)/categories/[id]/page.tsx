@@ -6,7 +6,10 @@ import { categoriesService } from '@/services/categories.service'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGridSkeleton } from '@/components/product/ProductCardSkeleton'
 import { EmptyStateCard, PageHeader, PageShell } from '@/components/shared'
+import { LocationRequired } from '@/components/shared/LocationRequired'
 import { ArrowUpDown, PackageSearch } from 'lucide-react'
+import { keys } from '@/lib/queryKeys'
+import { useStoreContext } from '@/store/store.context'
 
 import type { Product } from '@/types/product.types'
 
@@ -16,14 +19,18 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
     const [allProducts, setAllProducts] = useState<Product[]>([])
     const observerRef = useRef<HTMLDivElement>(null)
 
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
+
     const { data, isLoading } = useQuery({
-        queryKey: ['category-products', params.id, page, sort],
-        queryFn: () => categoriesService.getProducts(params.id, { page, sort }),
+        queryKey: keys.categoryProducts(storeId ?? '', params.id, page),
+        queryFn: () => categoriesService.getProducts(params.id, { page, sort, storeId }),
+        enabled: !!storeId,
     })
 
     const { data: category } = useQuery({
-        queryKey: ['category', params.id],
+        queryKey: keys.category(storeId ?? '', params.id),
         queryFn: () => categoriesService.getById(params.id),
+        enabled: !!storeId,
     })
 
     // Append new products
@@ -64,6 +71,14 @@ export default function CategoryPage({ params }: { params: { id: string } }) {
         observer.observe(el)
         return () => observer.disconnect()
     }, [data?.pagination, page])
+
+    if (!storeId) {
+        return (
+            <PageShell spacing="relaxed">
+                <LocationRequired />
+            </PageShell>
+        )
+    }
 
     return (
         <PageShell spacing="relaxed">

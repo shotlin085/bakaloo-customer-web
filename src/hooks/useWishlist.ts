@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { wishlistService } from '@/services/wishlist.service'
 import { useAuthStore } from '@/store/auth.store'
 import { useWishlistStore } from '@/store/wishlist.store'
@@ -22,7 +22,7 @@ export function useWishlist() {
     const qc = useQueryClient()
     const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
     const setCount = useWishlistStore((s) => s.setCount)
-    const wishlistKey = QUERY_KEYS.wishlist()
+    const wishlistKey = keys.wishlist()
     const [optimisticState, setOptimisticState] = useState<Record<string, boolean>>({})
 
     const { data: wishlist = [], isLoading } = useQuery({

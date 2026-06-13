@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, MapPin, Pencil, Star, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { addressesService } from '@/services/addresses.service'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { AddressForm } from '@/components/profile/AddressForm'
 import type { Address, CreateAddressPayload } from '@/types/address.types'
 
@@ -20,12 +20,12 @@ export default function ProfileAddressesPage() {
     const [sheetMode, setSheetMode] = useState<SheetMode>('create')
     const [editingAddress, setEditingAddress] = useState<Address | null>(null)
 
-    const { data: addresses = [], isLoading } = useQuery({
-        queryKey: QUERY_KEYS.addresses,
+    const { data: addresses = [], isLoading } = useQuery<Address[]>({
+        queryKey: keys.addresses(),
         queryFn: addressesService.getAll,
     })
 
-    const invalidate = () => qc.invalidateQueries({ queryKey: QUERY_KEYS.addresses })
+    const invalidate = () => qc.invalidateQueries({ queryKey: keys.addresses() })
 
     const createMutation = useMutation({
         mutationFn: (payload: CreateAddressPayload) => addressesService.create(payload),
@@ -136,7 +136,7 @@ export default function ProfileAddressesPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {addresses.map((address) => (
+                    {addresses.map((address: Address) => (
                         <article
                             key={address.id}
                             className={`rounded-2xl border bg-white p-4 ${address.is_default ? 'border-green-300' : 'border-gray-100'

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
+import { useAuthStore } from '@/store/auth.store'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import {
     CalendarDays,
     CheckCircle2,
@@ -12,6 +14,8 @@ import {
     Truck,
 } from 'lucide-react'
 import { PriceBreakdown, PrimaryCheckoutButton, TrustBadge } from '@/components/checkout'
+import { feesService, type CartBillSummary } from '@/services/fees.service'
+import { keys, STALE } from '@/lib/queryKeys'
 
 interface CartSummaryProps {
     subtotal: number
@@ -26,6 +30,7 @@ interface CartSummaryProps {
     className?: string
     promoContent?: ReactNode
     freeDeliveryThreshold?: number
+    // Live fees
 }
 
 const SUPPORT_PHONE = '+919775845587'
@@ -33,18 +38,32 @@ const SUPPORT_EMAIL = 'support@groceryapp.com'
 
 export function CartSummary({
     subtotal,
-    deliveryFee,
-    platformFee,
+    deliveryFee: deliveryFeeProp,
+    platformFee: platformFeeProp,
     discount,
     savings = 0,
-    total,
+    total: totalProp,
     itemCount,
     ctaLabel = 'Proceed to Checkout',
     onCheckout,
     className = '',
     promoContent,
-    freeDeliveryThreshold,
+    freeDeliveryThreshold: freeDeliveryThresholdProp,
 }: CartSummaryProps) {
+    const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+    const { data: feeSummary, isLoading: feesLoading } = useQuery<CartBillSummary>({
+        queryKey: keys.fees('cart', 'summary'),
+        queryFn: () => feesService.getCartSummary(),
+        enabled: isLoggedIn,
+        staleTime: STALE.fees,
+    })
+
+    // Map CartBillSummary fields to display values
+    const deliveryFee = feeSummary ? feeSummary.deliveryFee.amount : deliveryFeeProp
+    const platformFee = feeSummary ? feeSummary.platformFee.amount : platformFeeProp
+    const freeDeliveryThreshold = feeSummary ? feeSummary.freeDelivery.threshold ?? 0 : (freeDeliveryThresholdProp ?? 0)
+    const total = feeSummary ? feeSummary.toPay.final : totalProp
+
     return (
         <div
             className={`overflow-hidden rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,246,241,0.98)_100%)] p-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] ${className}`}
@@ -86,18 +105,29 @@ export function CartSummary({
             )}
 
             <div className="mt-4 rounded-[20px] border border-[rgba(104,72,198,0.08)] bg-white/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                <PriceBreakdown
-                    subtotal={subtotal}
-                    deliveryFee={deliveryFee}
-                    platformFee={platformFee}
-                    discount={discount}
-                    discountLabel="Coupon"
-                    savings={savings}
-                    total={total}
-                    itemCount={itemCount}
-                    freeDeliveryThreshold={freeDeliveryThreshold}
-                    showProgress
-                />
+                {feesLoading ? (
+                    <div className="space-y-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex items-center justify-between gap-3">
+                                <div className="h-4 w-24 rounded skeleton-shimmer" />
+                                <div className="h-4 w-16 rounded skeleton-shimmer" />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <PriceBreakdown
+                        subtotal={subtotal}
+                        deliveryFee={deliveryFee}
+                        platformFee={platformFee}
+                        discount={discount}
+                        discountLabel="Coupon"
+                        savings={savings}
+                        total={total}
+                        itemCount={itemCount}
+                        freeDeliveryThreshold={freeDeliveryThreshold}
+                        showProgress
+                    />
+                )}
             </div>
 
             <div className="mt-3.5 space-y-2">

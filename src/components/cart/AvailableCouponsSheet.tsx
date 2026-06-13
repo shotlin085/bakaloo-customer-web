@@ -5,6 +5,7 @@ import { Check, Clock, Tag } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { cn, formatDate, formatINR } from '@/lib/utils'
 import { couponsService } from '@/services/coupons.service'
+import { useStoreContext } from '@/store/store.context'
 
 type CouponLike = {
     id: string
@@ -29,10 +30,11 @@ export function AvailableCouponsSheet({
     onApply,
     appliedCode,
 }: AvailableCouponsSheetProps) {
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
     const { data } = useQuery({
-        queryKey: ['coupons', 'available'],
-        queryFn: () => couponsService.getAvailable(),
-        enabled: open,
+        queryKey: ['coupons', 'available', storeId ?? ''],
+        queryFn: () => couponsService.getAvailable(storeId!),
+        enabled: open && Boolean(storeId),
     })
 
     const coupons = (data ?? []) as CouponLike[]

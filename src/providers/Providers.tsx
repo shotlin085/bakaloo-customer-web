@@ -3,12 +3,15 @@
 import { QueryProvider } from './QueryProvider'
 import { AuthProvider } from './AuthProvider'
 import { SocketProvider } from './SocketProvider'
+import { StoreContextInitializer } from './StoreContextInitializer'
 import { Toaster } from '@/components/ui/sonner'
 import { ShopThemeProvider } from '@/components/theme/ShopThemeProvider'
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
         <QueryProvider>
+            {/* Wire TanStack Query cache invalidation into the Zustand StoreContext */}
+            <StoreContextInitializer />
             <AuthProvider>
                 <SocketProvider>
                     <ShopThemeProvider>

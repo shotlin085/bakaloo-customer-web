@@ -26,11 +26,11 @@ export function createQueryClient() {
         defaultOptions: {
             queries: {
                 staleTime: 5 * 60 * 1000,
-                gcTime: 10 * 60 * 1000,
+                gcTime: 30 * 60 * 1000,  // Keep in memory 30min — reduces refetches on navigation
                 retry: (count, err) => {
                     if (err instanceof AxiosError) {
                         const s = err.response?.status ?? 0
-                        if (s >= 400 && s < 500) return false // Never retry client errors
+                        if (s >= 400 && s < 500) return false
                     }
                     return count < 2
                 },

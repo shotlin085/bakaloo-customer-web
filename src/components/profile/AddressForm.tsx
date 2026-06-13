@@ -321,8 +321,8 @@ export function AddressForm({
       state: data.state,
       pincode: data.pincode,
       isDefault: data.isDefault ?? false,
-      lat: coordinates.lat,
-      lng: coordinates.lng,
+      lat: coordinates.lat as number,
+      lng: coordinates.lng as number,
     })
   }
 

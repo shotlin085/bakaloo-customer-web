@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MessageSquareText, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { reviewsService } from '@/services/reviews.service'
 import { RatingStars } from '@/components/shared/RatingStars'
 import { timeAgo } from '@/lib/utils'
@@ -26,7 +26,7 @@ export default function ProfileReviewsPage() {
     }, [])
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.myReviews,
+        queryKey: keys.myReviews(),
         queryFn: () => reviewsService.getMyReviews(),
     })
 
@@ -36,7 +36,7 @@ export default function ProfileReviewsPage() {
             await reviewsService.deleteReview(id)
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myReviews })
+            await queryClient.invalidateQueries({ queryKey: keys.myReviews() })
             toast.success('Review deleted')
         },
         onError: () => {

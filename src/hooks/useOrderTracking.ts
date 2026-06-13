@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { socketManager } from '@/lib/socket'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 
 interface RiderLocation {
     lat: number
@@ -32,7 +32,7 @@ export function useOrderTracking(orderId: string, enabled = true) {
             if (!data?.status) return
             const status = String(data.status)
             setState((prev) => ({ ...prev, liveStatus: status }))
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.order(orderId) })
+            queryClient.invalidateQueries({ queryKey: keys.order(orderId) })
         },
         [orderId, queryClient],
     )
@@ -45,7 +45,7 @@ export function useOrderTracking(orderId: string, enabled = true) {
 
     const handleDelivered = useCallback(() => {
         setState((prev) => ({ ...prev, liveStatus: 'DELIVERED' }))
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.order(orderId) })
+        queryClient.invalidateQueries({ queryKey: keys.order(orderId) })
         queryClient.invalidateQueries({ queryKey: ['orders'] })
     }, [orderId, queryClient])
 

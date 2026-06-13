@@ -5,6 +5,16 @@ type RawCartItem = {
     id?: string
     productId?: string
     product_id?: string
+    shopProductId?: string
+    shop_product_id?: string
+    storeId?: string
+    store_id?: string
+    shopId?: string
+    shop_id?: string
+    storeName?: string
+    store_name?: string
+    shopName?: string
+    shop_name?: string
     name?: string
     price?: number | string | null
     originalPrice?: number | string | null
@@ -50,6 +60,10 @@ function normalizeCartItem(raw: RawCartItem) {
 
     return {
         productId,
+        // Multi-vendor: prefer shopProductId from backend, fall back to productId
+        shopProductId: String(raw.shopProductId ?? raw.shop_product_id ?? productId),
+        storeId: String(raw.storeId ?? raw.store_id ?? raw.shopId ?? raw.shop_id ?? ''),
+        storeName: String(raw.storeName ?? raw.store_name ?? raw.shopName ?? raw.shop_name ?? ''),
         name: String(raw.name ?? 'Product'),
         price,
         originalPrice: originalPrice > price ? originalPrice : null,
@@ -76,11 +90,18 @@ function normalizeCart(raw: RawCart): Cart {
             ? Math.max(0, Math.trunc(toNumber(raw.count)))
             : items.reduce((sum, item) => sum + item.quantity, 0)
 
-    return {
-        items,
-        subtotal,
-        count,
-    }
+    // Derive cart storeId from first item if backend doesn't return it top-level
+    const rawAny = raw as Record<string, unknown>
+    const storeId =
+        String(rawAny.storeId ?? rawAny.store_id ?? rawAny.shopId ?? rawAny.shop_id ?? '') ||
+        items[0]?.storeId ||
+        null
+    const storeName =
+        String(rawAny.storeName ?? rawAny.store_name ?? rawAny.shopName ?? rawAny.shop_name ?? '') ||
+        items[0]?.storeName ||
+        null
+
+    return { items, subtotal, count, storeId, storeName }
 }
 
 export const cartService = {
@@ -89,18 +110,39 @@ export const cartService = {
         return normalizeCart(data.data as RawCart)
     },
 
-    addItem: async (productId: string, quantity: number): Promise<Cart> => {
-        const { data } = await api.post('/cart/items', { productId, quantity })
+    /**
+     * Add item to cart.
+     * POST /cart/items
+     * Body: { shopProductId, quantity }  OR  { productId, quantity }
+     * Backend accepts either — shopProductId is preferred for multi-vendor correctness.
+     */
+    addItem: async (shopProductId: string, quantity: number): Promise<Cart> => {
+        const { data } = await api.post('/cart/items', { shopProductId, quantity })
         return normalizeCart(data.data as RawCart)
     },
 
-    updateQuantity: async (productId: string, quantity: number): Promise<Cart> => {
-        const { data } = await api.put(`/cart/items/${productId}`, { quantity })
+    /**
+     * Update item quantity.
+     * PUT /cart/items/:productId
+     * Note: backend path uses productId (master product UUID), not shopProductId.
+     * Body: { quantity, shopProductId }
+     */
+    updateQuantity: async (productId: string, quantity: number, shopProductId?: string): Promise<Cart> => {
+        const { data } = await api.put(`/cart/items/${productId}`, {
+            quantity,
+            ...(shopProductId ? { shopProductId } : {}),
+        })
         return normalizeCart(data.data as RawCart)
     },
 
-    removeItem: async (productId: string): Promise<void> => {
-        await api.delete(`/cart/items/${productId}`)
+    /**
+     * Remove item from cart.
+     * DELETE /cart/items/:productId
+     * Note: backend path uses productId (master product UUID), not shopProductId.
+     */
+    removeItem: async (productId: string, shopProductId?: string): Promise<void> => {
+        const params = shopProductId ? { params: { shopProductId } } : {}
+        await api.delete(`/cart/items/${productId}`, params)
     },
 
     clear: async (): Promise<void> => {

@@ -13,6 +13,7 @@ export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
 
 export interface OrderItem {
     productId: string
+    shopProductId?: string         // Multi-vendor: junction table PK
     name: string
     price: number
     quantity: number
@@ -41,6 +42,11 @@ export interface Order {
     rider: OrderRider | null
     created_at: string
     updated_at: string
+
+    // Multi-vendor store attribution
+    shop_id?: string | null
+    shop_name?: string | null
+    store_slug?: string | null
 }
 
 export interface OrderAddress {
@@ -65,4 +71,5 @@ export interface PlaceOrderPayload {
     paymentMethod: PaymentMethod
     couponCode?: string
     deliveryNotes?: string
+    storeId: string                // Required for multi-vendor — which store fulfils the order
 }

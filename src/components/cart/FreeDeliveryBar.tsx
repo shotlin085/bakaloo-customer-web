@@ -4,25 +4,32 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, Sparkles, Truck } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
+import type { FeeSummary } from '@/types/store.types'
 
 interface FreeDeliveryBarProps {
     subtotal: number
     threshold: number
+    feeSummary?: FeeSummary
 }
 
-export function FreeDeliveryBar({ subtotal, threshold }: FreeDeliveryBarProps) {
+export function FreeDeliveryBar({ subtotal, threshold, feeSummary }: FreeDeliveryBarProps) {
     const reduceMotion = useReducedMotion()
-    const remaining = Math.max(0, threshold - subtotal)
-    const progress = Math.min(100, Math.round((subtotal / threshold) * 100))
+    const effectiveThreshold = feeSummary ? feeSummary.free_delivery_threshold : threshold
+    const remaining = feeSummary
+        ? feeSummary.free_delivery_remaining
+        : Math.max(0, threshold - subtotal)
+    const progress = effectiveThreshold > 0
+        ? Math.min(100, Math.round((subtotal / effectiveThreshold) * 100))
+        : 100
     const prevSubtotal = useRef(subtotal)
     const [celebrating, setCelebrating] = useState(false)
 
     useEffect(() => {
-        if (prevSubtotal.current < threshold && subtotal >= threshold) {
+        if (prevSubtotal.current < effectiveThreshold && subtotal >= effectiveThreshold) {
             setCelebrating(true)
         }
         prevSubtotal.current = subtotal
-    }, [subtotal, threshold])
+    }, [subtotal, effectiveThreshold])
 
     useEffect(() => {
         if (!celebrating) return
@@ -75,7 +82,7 @@ export function FreeDeliveryBar({ subtotal, threshold }: FreeDeliveryBarProps) {
                             </motion.span>
                         </div>
                         <p className="mt-2 text-xs font-medium text-[#4D7C5A]">
-                            You crossed the {formatINR(threshold)} threshold. Delivery fee is now free.
+                            You crossed the {formatINR(effectiveThreshold)} threshold. Delivery fee is now free.
                         </p>
                     </div>
                 </div>

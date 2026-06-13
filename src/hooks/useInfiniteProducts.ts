@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { productsService } from '@/services/products.service'
+import { useStoreContext } from '@/store/store.context'
 
 interface UseInfiniteProductsParams {
     categoryId?: string
@@ -11,6 +12,8 @@ interface UseInfiniteProductsParams {
 }
 
 export function useInfiniteProducts(params: UseInfiniteProductsParams = {}) {
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
+
     const normalizedParams = useMemo(
         () => ({
             categoryId: params.categoryId || undefined,
@@ -22,9 +25,9 @@ export function useInfiniteProducts(params: UseInfiniteProductsParams = {}) {
     )
 
     return useInfiniteQuery({
-        queryKey: QUERY_KEYS.products({ ...normalizedParams, type: 'infinite' }),
+        queryKey: keys.products(storeId ?? '', normalizedParams),
         queryFn: ({ pageParam = 1 }) =>
-            productsService.getAll({
+            productsService.getShopProducts(storeId!, {
                 page: pageParam,
                 limit: 20,
                 categoryId: normalizedParams.categoryId,
@@ -39,5 +42,6 @@ export function useInfiniteProducts(params: UseInfiniteProductsParams = {}) {
         },
         initialPageParam: 1,
         staleTime: 5 * 60 * 1000,
+        enabled: Boolean(storeId),
     })
 }

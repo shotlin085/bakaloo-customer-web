@@ -14,39 +14,12 @@ export const ORDER_STATUS_CONFIG: Record<
     REFUNDED: { label: 'Refunded', color: '#6B7280', bg: '#F9FAFB' },
 } as const
 
-export const QUERY_KEYS = {
-    cart: ['cart'] as const,
-    categories: ['categories'] as const,
-    products: (p?: Record<string, unknown>) => ['products', p] as const,
-    product: (id: string) => ['product', id] as const,
-    orders: (p?: Record<string, unknown>) => ['orders', p] as const,
-    order: (id: string) => ['order', id] as const,
-    wishlist: ['wishlist'] as const,
-    wallet: ['wallet'] as const,
-    walletTransactions: ['wallet-transactions'] as const,
-    notifications: ['notifications'] as const,
-    addresses: ['addresses'] as const,
-    user: ['user'] as const,
-    banners: ['banners'] as const,
-    reviews: (productId: string) => ['reviews', productId] as const,
-    myReviews: ['my-reviews'] as const,
-} as const
-
-export const STALE_TIMES = {
-    banners: 30 * 60 * 1000,
-    categories: 30 * 60 * 1000,
-    products: 5 * 60 * 1000,
-    cart: 0,
-    orders: 30 * 1000,
-    wallet: 0,
-    notifications: 0,
-    user: 15 * 60 * 1000,
-    addresses: 10 * 60 * 1000,
-} as const
-
-export const FREE_DELIVERY_THRESHOLD = 299
-export const PLATFORM_FEE = 5
-export const DEFAULT_DELIVERY_FEE = 29
+// ── UI / UX constants (not business-logic fees — those come from backend) ──
 export const OTP_RESEND_SECONDS = 60
 export const SEARCH_DEBOUNCE_MS = 300
 export const MAX_CART_QTY = 10
+
+// NOTE: FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_FEE, PLATFORM_FEE are
+// intentionally removed. All fee values must come from the backend via
+// GET /stores/:storeId/fees — never calculated client-side.
+// See: src/types/store.types.ts FeeSummary

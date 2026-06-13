@@ -19,13 +19,21 @@ import {
     PromoCodeInput,
 } from '@/components/cart'
 import { cartSavings } from '@/components/cart/cart.utils'
-import { DEFAULT_DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, PLATFORM_FEE } from '@/lib/constants'
+import { CartStoreSwitchDialog } from '@/components/store/CartStoreSwitchDialog'
+import { useCartStore } from '@/store/cart.store'
 import { formatINR } from '@/lib/utils'
+
+// Fee values are now served from the backend FeeSummary — using 0 as placeholder
+// until cart page is updated to use the fees API.
+const FREE_DELIVERY_THRESHOLD = 0
+const DEFAULT_DELIVERY_FEE = 0
+const PLATFORM_FEE = 0
 
 export default function CartPage() {
     const router = useRouter()
     const reduceMotion = useReducedMotion()
-    const { cart, isLoading, updateQty, removeFromCart } = useCart()
+    const { cart, isLoading, updateQty, removeFromCart, pendingCrossStore, confirmStoreSwitchAndAdd, cancelStoreSwitch } = useCart()
+    const cartStore = useCartStore()
     const subtotal = cart?.subtotal ?? 0
     const [showCouponSheet, setShowCouponSheet] = useState(false)
     const { coupon, applyCoupon, removeCoupon, isValidating } = useCoupon(subtotal)
@@ -127,10 +135,10 @@ export default function CartPage() {
                                 <AnimatePresence initial={false}>
                                     {cart.items.map((item) => (
                                         <CartItemMobile
-                                            key={item.productId}
+                                            key={item.shopProductId}
                                             item={item}
-                                            onQtyChange={(qty) => updateQty(item.productId, qty)}
-                                            onRemove={() => removeFromCart(item.productId)}
+                                            onQtyChange={(qty) => updateQty(item.shopProductId, qty)}
+                                            onRemove={() => removeFromCart(item.shopProductId)}
                                         />
                                     ))}
                                 </AnimatePresence>
@@ -142,10 +150,10 @@ export default function CartPage() {
                                 <AnimatePresence initial={false}>
                                     {cart.items.map((item) => (
                                         <CartItem
-                                            key={item.productId}
+                                            key={item.shopProductId}
                                             item={item}
-                                            onQtyChange={(qty) => updateQty(item.productId, qty)}
-                                            onRemove={() => removeFromCart(item.productId)}
+                                            onQtyChange={(qty) => updateQty(item.shopProductId, qty)}
+                                            onRemove={() => removeFromCart(item.shopProductId)}
                                         />
                                     ))}
                                 </AnimatePresence>
@@ -207,6 +215,14 @@ export default function CartPage() {
                 appliedCode={coupon.code}
                 isValidating={isValidating}
                 onRemove={removeCoupon}
+            />
+
+            <CartStoreSwitchDialog
+                open={!!pendingCrossStore}
+                currentStoreName={cartStore.storeName ?? 'Current store'}
+                newStoreName={pendingCrossStore?.newStoreName ?? ''}
+                onConfirm={confirmStoreSwitchAndAdd}
+                onCancel={cancelStoreSwitch}
             />
         </>
     )

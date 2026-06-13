@@ -12,14 +12,14 @@ import {
     StepIndicator,
     StickySummaryBar,
 } from '@/components/checkout'
-import { FREE_DELIVERY_THRESHOLD, DEFAULT_DELIVERY_FEE, PLATFORM_FEE } from '@/lib/constants'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { useCart } from '@/hooks/useCart'
 import { useCoupon } from '@/hooks/useCoupon'
 import { loadRazorpay, openRazorpayCheckout } from '@/lib/razorpay'
 import { formatINR } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { useCouponStore } from '@/store/coupon.store'
+import { useStoreContext } from '@/store/store.context'
 import { cartService } from '@/services/cart.service'
 import { ordersService } from '@/services/orders.service'
 import { paymentsService } from '@/services/payments.service'
@@ -27,6 +27,11 @@ import { walletService } from '@/services/wallet.service'
 import { toast } from 'sonner'
 import type { Address } from '@/types/address.types'
 import type { PaymentMethod } from '@/types/order.types'
+
+// Fee values are now served from the backend FeeSummary
+const FREE_DELIVERY_THRESHOLD = 0
+const DEFAULT_DELIVERY_FEE = 0
+const PLATFORM_FEE = 0
 
 type Step = 'address' | 'payment' | 'review'
 
@@ -41,6 +46,7 @@ export default function CheckoutPage() {
     const router = useRouter()
     const user = useAuthStore((state) => state.user)
     const clearCoupon = useCouponStore((state) => state.clearCoupon)
+    const allocatedStoreId = useStoreContext((s) => s.allocatedStoreId)
     const { cart } = useCart()
 
     const [step, setStep] = useState<Step>('address')
@@ -50,7 +56,7 @@ export default function CheckoutPage() {
     const [isPlacing, setIsPlacing] = useState(false)
 
     const { data: walletBalanceData, isLoading: walletBalanceLoading } = useQuery({
-        queryKey: QUERY_KEYS.wallet(),
+        queryKey: keys.wallet(),
         queryFn: walletService.getBalance,
         enabled: !!user,
     })
@@ -95,6 +101,7 @@ export default function CheckoutPage() {
                 paymentMethod,
                 couponCode: coupon.isValid ? coupon.code ?? undefined : undefined,
                 deliveryNotes: deliveryNotes.trim() || undefined,
+                storeId: allocatedStoreId ?? '',
             })
 
             if (paymentMethod === 'ONLINE') {

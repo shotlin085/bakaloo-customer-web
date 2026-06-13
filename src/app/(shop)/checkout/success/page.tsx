@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ArrowRight, ShoppingBag, Clock, Package } from 'lucide-react'
 import { ordersService } from '@/services/orders.service'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { formatDateTime, formatINR } from '@/lib/utils'
 import { ShareButton } from '@/components/shared/ShareButton'
 
@@ -21,11 +21,11 @@ export default function CheckoutSuccessPage() {
     }, [])
 
     useEffect(() => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cart })
+        queryClient.invalidateQueries({ queryKey: keys.cartFallback() })
     }, [queryClient])
 
     const { data: order, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.order(orderId || 'unknown'),
+        queryKey: keys.order(orderId || 'unknown'),
         queryFn: () => ordersService.getById(orderId),
         enabled: Boolean(orderId),
         staleTime: 60 * 1000,
@@ -127,7 +127,7 @@ export default function CheckoutSuccessPage() {
             <div className="flex w-full flex-col gap-3 sm:flex-row">
                 {orderId && (
                     <Link
-                        href={`/orders/${orderId}`}
+                        href={`/orders/${orderId}#tracking`}
                         className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-green-500 px-6 text-sm font-semibold text-white transition-colors hover:bg-green-600"
                     >
                         <Package className="h-4 w-4" strokeWidth={1.5} />

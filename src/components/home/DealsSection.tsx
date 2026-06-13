@@ -1,15 +1,19 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
 import { productsService } from '@/services/products.service'
+import { useStoreContext } from '@/store/store.context'
 import { ProductSectionRow } from './ProductSectionRow'
 
 export function DealsSection() {
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
+
     const { data } = useQuery({
-        queryKey: QUERY_KEYS.products({ section: 'deals' }),
+        queryKey: keys.dealsProducts(storeId ?? ''),
         queryFn: () => productsService.getDeals(),
-        staleTime: STALE_TIMES.products,
+        staleTime: STALE.products,
+        enabled: Boolean(storeId),
     })
 
     const products = data ?? []

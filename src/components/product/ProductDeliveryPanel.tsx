@@ -4,13 +4,27 @@ import { useState } from 'react'
 import { CheckCircle2, Loader2, MapPin, PackageCheck, Store, Truck, XCircle } from 'lucide-react'
 import { addressesService } from '@/services/addresses.service'
 import { Button } from '@/components/ui/button'
+import { useStoreContext } from '@/store/store.context'
 
 type DeliveryStatus = 'idle' | 'checking' | 'available' | 'unavailable' | 'error'
 
-export function ProductDeliveryPanel() {
+interface ProductDeliveryPanelProps {
+    /** Store attribution — kept for forward compatibility with shop-scoped delivery info */
+    product?: { shop_id?: string | null; shop_name?: string | null }
+}
+
+export function ProductDeliveryPanel(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _props: ProductDeliveryPanelProps = {},
+) {
     const [pincode, setPincode] = useState('')
     const [status, setStatus] = useState<DeliveryStatus>('idle')
     const [message, setMessage] = useState('')
+
+    const serviceable = useStoreContext((s) => s.serviceable)
+    const allocatedStoreName = useStoreContext((s) => s.allocatedStoreName)
+    const deliveryEta = useStoreContext((s) => s.deliveryEta)
+    const selectedPincode = useStoreContext((s) => s.selectedPincode)
 
     const handleCheck = async () => {
         const normalized = pincode.trim()
@@ -75,57 +89,71 @@ export function ProductDeliveryPanel() {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-[color:var(--shop-border)] bg-white/90 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--shop-ink)]">
-                    <MapPin className="h-4 w-4 text-[color:var(--shop-primary)]" strokeWidth={1.8} />
-                    Check delivery to your pincode
+            {serviceable && allocatedStoreName ? (
+                <div className="rounded-2xl border border-green-200 bg-green-50/80 p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-800">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" strokeWidth={1.8} />
+                        Delivering to {selectedPincode ?? 'your location'}
+                    </div>
+                    <p className="mt-1.5 text-xs text-green-700">
+                        Delivered by{' '}
+                        <span className="font-semibold">{allocatedStoreName}</span>
+                        {deliveryEta != null && ` · ${deliveryEta} min`}
+                    </p>
                 </div>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <input
-                        value={pincode}
-                        onChange={(event) => {
-                            setPincode(event.target.value.replace(/\D/g, '').slice(0, 6))
-                            if (status !== 'idle') {
-                                setStatus('idle')
-                                setMessage('')
-                            }
-                        }}
-                        inputMode="numeric"
-                        placeholder="6-digit pincode"
-                        className="h-11 w-full rounded-xl border border-[color:var(--shop-border)] bg-white px-4 text-sm text-[color:var(--shop-ink)] outline-none transition-colors focus:border-[color:var(--shop-primary)]"
-                    />
-                    <Button
-                        type="button"
-                        size="lg"
-                        onClick={handleCheck}
-                        disabled={status === 'checking'}
-                        className="h-11 rounded-xl bg-[color:var(--shop-ink)] px-5 text-sm font-semibold text-white hover:bg-[#1f2937]"
-                    >
-                        {status === 'checking' ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            'Check'
-                        )}
-                    </Button>
-                </div>
-
-                <div className="mt-3 flex items-start gap-2 rounded-xl bg-[var(--shop-surface)] px-3 py-2.5 text-xs text-[color:var(--shop-ink-muted)]">
-                    {status === 'available' ? (
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" strokeWidth={1.8} />
-                    ) : status === 'unavailable' || status === 'error' ? (
-                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" strokeWidth={1.8} />
-                    ) : (
-                        <PackageCheck
-                            className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--shop-primary)]"
-                            strokeWidth={1.8}
+            ) : (
+                <div className="rounded-2xl border border-[color:var(--shop-border)] bg-white/90 p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--shop-ink)]">
+                        <MapPin className="h-4 w-4 text-[color:var(--shop-primary)]" strokeWidth={1.8} />
+                        Check delivery to your pincode
+                    </div>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <input
+                            value={pincode}
+                            onChange={(event) => {
+                                setPincode(event.target.value.replace(/\D/g, '').slice(0, 6))
+                                if (status !== 'idle') {
+                                    setStatus('idle')
+                                    setMessage('')
+                                }
+                            }}
+                            inputMode="numeric"
+                            placeholder="6-digit pincode"
+                            className="h-11 w-full rounded-xl border border-[color:var(--shop-border)] bg-white px-4 text-sm text-[color:var(--shop-ink)] outline-none transition-colors focus:border-[color:var(--shop-primary)]"
                         />
-                    )}
-                    <span>
-                        {message ||
-                            'We will confirm delivery availability, fee, and expected arrival before checkout.'}
-                    </span>
+                        <Button
+                            type="button"
+                            size="lg"
+                            onClick={handleCheck}
+                            disabled={status === 'checking'}
+                            className="h-11 rounded-xl bg-[color:var(--shop-ink)] px-5 text-sm font-semibold text-white hover:bg-[#1f2937]"
+                        >
+                            {status === 'checking' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                'Check'
+                            )}
+                        </Button>
+                    </div>
+
+                    <div className="mt-3 flex items-start gap-2 rounded-xl bg-[var(--shop-surface)] px-3 py-2.5 text-xs text-[color:var(--shop-ink-muted)]">
+                        {status === 'available' ? (
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" strokeWidth={1.8} />
+                        ) : status === 'unavailable' || status === 'error' ? (
+                            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" strokeWidth={1.8} />
+                        ) : (
+                            <PackageCheck
+                                className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--shop-primary)]"
+                                strokeWidth={1.8}
+                            />
+                        )}
+                        <span>
+                            {message ||
+                                'We will confirm delivery availability, fee, and expected arrival before checkout.'}
+                        </span>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

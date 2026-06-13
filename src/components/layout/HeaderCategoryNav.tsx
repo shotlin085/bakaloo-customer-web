@@ -15,7 +15,8 @@ import {
   Sprout,
 } from 'lucide-react'
 import { categoriesService } from '@/services/categories.service'
-import { QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
+import { useStoreContext } from '@/store/store.context'
 import { getHomepageCategoryNav } from '@/lib/shopfront/shopfront-home.utils'
 import {
   SHOPFRONT_HEADER_HOTLINE,
@@ -46,10 +47,12 @@ function CategoryIcon({ iconKey }: { iconKey: CategoryIconKey | 'default' }) {
 }
 
 export function HeaderCategoryNav() {
+  const storeId = useStoreContext((s) => s.allocatedStoreId)
   const { data: categories = [] } = useQuery({
-    queryKey: QUERY_KEYS.categories,
-    queryFn: categoriesService.getAll,
-    staleTime: STALE_TIMES.categories,
+    queryKey: keys.categories(storeId ?? ''),
+    queryFn: () => categoriesService.getForStore(),
+    staleTime: STALE.categories,
+    enabled: Boolean(storeId),
   })
 
   const navCategories = getHomepageCategoryNav(categories).slice(0, 4)

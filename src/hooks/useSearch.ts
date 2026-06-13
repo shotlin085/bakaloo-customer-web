@@ -2,15 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { QUERY_KEYS, SEARCH_DEBOUNCE_MS } from '@/lib/constants'
+import { SEARCH_DEBOUNCE_MS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { productsService } from '@/services/products.service'
 import { useSearchStore } from '@/store/search.store'
+import { useStoreContext } from '@/store/store.context'
 
 export function useSearch() {
     const [query, setQuery] = useState('')
     const [debouncedQuery, setDebouncedQuery] = useState('')
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const { recentSearches, addSearch, clearSearches } = useSearchStore()
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
 
     useEffect(() => {
         if (timerRef.current) clearTimeout(timerRef.current)
@@ -21,9 +24,9 @@ export function useSearch() {
     }, [query])
 
     const { data: results, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.products({ search: debouncedQuery, mode: 'instant' }),
-        queryFn: () => productsService.search(debouncedQuery, 1),
-        enabled: debouncedQuery.length >= 1,
+        queryKey: keys.search(storeId ?? '', debouncedQuery, 1),
+        queryFn: () => productsService.searchShopProducts(storeId!, debouncedQuery, 1),
+        enabled: debouncedQuery.length >= 1 && Boolean(storeId),
         staleTime: 60_000,
     })
 

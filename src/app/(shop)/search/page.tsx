@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { Clock3, Search, Sparkles, Trash2, X } from 'lucide-react'
-import { QUERY_KEYS } from '@/lib/queryKeys'
+import { keys } from '@/lib/queryKeys'
 import { productsService } from '@/services/products.service'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGrid, ProductGridSkeleton } from '@/components/product/ProductGrid'
 import { EmptyStateCard, PageHeader, PageShell, SectionHeader } from '@/components/shared'
 import { useSearchStore } from '@/store/search.store'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
+import { useStoreContext } from '@/store/store.context'
 import type { Product } from '@/types/product.types'
 
 export default function SearchPage() {
@@ -33,11 +34,12 @@ function SearchContent() {
 
     const { recentSearches, addSearch, removeSearch, clearSearches } = useSearchStore()
     const { recentlyViewedIds } = useRecentlyViewed()
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.search(q, 1),
-        queryFn: () => productsService.search(q, 1),
-        enabled: q.length >= 1,
+        queryKey: keys.search(storeId ?? '', q, 1),
+        queryFn: () => productsService.searchShopProducts(storeId!, q, 1),
+        enabled: q.length >= 1 && Boolean(storeId),
         staleTime: 3 * 60 * 1000,
     })
 

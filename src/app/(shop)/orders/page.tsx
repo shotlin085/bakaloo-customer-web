@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ordersService } from '@/services/orders.service'
 import { formatINR, formatDate, cn } from '@/lib/utils'
-import { ORDER_STATUS_CONFIG, QUERY_KEYS, STALE_TIMES } from '@/lib/constants'
+import { ORDER_STATUS_CONFIG } from '@/lib/constants'
+import { keys, STALE } from '@/lib/queryKeys'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyStateCard, PageHeader, PageShell } from '@/components/shared'
 import { Package, ChevronRight } from 'lucide-react'
@@ -22,9 +23,9 @@ export default function OrdersPage() {
 
 
     const { data, isLoading } = useQuery({
-        queryKey: QUERY_KEYS.orders({}),
+        queryKey: keys.orders({}),
         queryFn: () => ordersService.getAll({ limit: 50 }),
-        staleTime: STALE_TIMES.orders,
+        staleTime: STALE.orders,
     })
 
     const ACTIVE_STATUSES = ['PENDING', 'CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY']

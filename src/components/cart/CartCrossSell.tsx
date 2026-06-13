@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProductCard } from '@/components/product/ProductCard'
 import { SectionHeader } from '@/components/shared/SectionHeader'
 import { productsService } from '@/services/products.service'
+import { useStoreContext } from '@/store/store.context'
 import type { Product } from '@/types/product.types'
 
 interface CartCrossSellProps {
@@ -22,10 +23,12 @@ export function CartCrossSell({ productIds, cartProductIds }: CartCrossSellProps
         threshold: 0.15,
         triggerOnce: true,
     })
+    const storeId = useStoreContext((s) => s.allocatedStoreId)
 
     const { data: products = [], isLoading } = useQuery({
-        queryKey: ['cart-cross-sell', productIds],
+        queryKey: ['cart-cross-sell', productIds, storeId],
         queryFn: async () => {
+            if (!storeId) return []
             const cartIds = new Set(cartProductIds)
             const results = await Promise.allSettled(
                 productIds.map((productId) => productsService.getRelated(productId, 4)),
@@ -47,7 +50,7 @@ export function CartCrossSell({ productIds, cartProductIds }: CartCrossSellProps
 
             return Array.from(unique.values())
         },
-        enabled: inView && productIds.length > 0,
+        enabled: inView && productIds.length > 0 && Boolean(storeId),
         staleTime: 5 * 60 * 1000,
     })
 

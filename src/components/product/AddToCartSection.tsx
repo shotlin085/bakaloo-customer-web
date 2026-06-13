@@ -10,17 +10,22 @@ import type { Product } from '@/types/product.types'
 
 export function AddToCartSection({ product }: { product: Product }) {
     const { addToCart, updateQty, removeFromCart, getQty, isAdding, isUpdating } = useCart()
-    const qty = getQty(product.id)
-    const max = product.max_order_qty ?? Math.min(product.stock_quantity, 10)
-    const outOfStock = product.stock_quantity === 0
+
+    // Use shopProductId when available (multi-vendor), fall back to product.id
+    const shopProductId = product.shop_product_id ?? product.id
+    const effectiveStock = product.shop_stock ?? product.stock_quantity
+
+    const qty = getQty(shopProductId)
+    const max = product.max_order_qty ?? Math.min(effectiveStock, 10)
+    const outOfStock = effectiveStock === 0
 
     const [selectedQty, setSelectedQty] = useState(1)
-    const displayPrice = product.sale_price ?? product.salePrice ?? product.price
+    const displayPrice = product.shop_price ?? product.sale_price ?? product.salePrice ?? product.price
     const lowStockMessage =
-        product.stock_quantity <= 1
+        effectiveStock <= 1
             ? 'Last one left'
-            : product.stock_quantity < 5
-              ? `Only ${product.stock_quantity} left`
+            : effectiveStock < 5
+              ? `Only ${effectiveStock} left`
               : null
 
     if (outOfStock) {
@@ -41,7 +46,11 @@ export function AddToCartSection({ product }: { product: Product }) {
                     <div className="flex items-center overflow-hidden rounded-2xl border border-gray-200 bg-white">
                         <button
                             type="button"
-                            onClick={() => (qty === 1 ? removeFromCart(product.id) : updateQty(product.id, qty - 1))}
+                            onClick={() =>
+                                qty === 1
+                                    ? removeFromCart(shopProductId)
+                                    : updateQty(shopProductId, qty - 1)
+                            }
                             disabled={isUpdating}
                             className="flex h-11 w-11 items-center justify-center transition-colors hover:bg-gray-50"
                         >
@@ -50,7 +59,7 @@ export function AddToCartSection({ product }: { product: Product }) {
                         <span className="w-12 text-center text-lg font-bold text-gray-900">{qty}</span>
                         <button
                             type="button"
-                            onClick={() => qty < max && updateQty(product.id, qty + 1)}
+                            onClick={() => qty < max && updateQty(shopProductId, qty + 1)}
                             disabled={isUpdating || qty >= max}
                             className="flex h-11 w-11 items-center justify-center transition-colors hover:bg-gray-50 disabled:opacity-40"
                         >
@@ -108,7 +117,14 @@ export function AddToCartSection({ product }: { product: Product }) {
             <Button
                 size="lg"
                 className="h-12 w-full rounded-xl bg-[color:var(--shop-ink)] text-base font-semibold text-white hover:bg-[#1f2937]"
-                onClick={() => addToCart(product.id, selectedQty)}
+                onClick={() =>
+                    addToCart(
+                        shopProductId,
+                        selectedQty,
+                        product.shop_id ?? undefined,
+                        product.shop_name ?? undefined,
+                    )
+                }
                 disabled={isAdding}
             >
                 {isAdding ? (

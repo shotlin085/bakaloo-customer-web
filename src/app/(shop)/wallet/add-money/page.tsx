@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { loadRazorpay, openRazorpayCheckout } from '@/lib/razorpay'
-import { QUERY_KEYS } from '@/lib/constants'
+import { keys } from '@/lib/queryKeys'
 import { walletService } from '@/services/wallet.service'
 import { useAuthStore } from '@/store/auth.store'
 import { cn, formatINR } from '@/lib/utils'
@@ -66,8 +66,8 @@ export default function AddMoneyPage() {
                         payment.razorpay_signature,
                     )
                     await Promise.all([
-                        qc.invalidateQueries({ queryKey: QUERY_KEYS.wallet }),
-                        qc.invalidateQueries({ queryKey: QUERY_KEYS.walletTransactions }),
+                        qc.invalidateQueries({ queryKey: keys.wallet() }),
+                        qc.invalidateQueries({ queryKey: keys.walletTransactions() }),
                     ])
                     toast.success(`₹${value} added to wallet!`)
                     router.push('/wallet')

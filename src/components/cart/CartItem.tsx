@@ -4,7 +4,7 @@ import type { KeyboardEvent } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Minus, Package2, Plus, Trash2 } from 'lucide-react'
+import { Minus, Package2, Plus, Store, Trash2 } from 'lucide-react'
 import { formatINR } from '@/lib/utils'
 import type { CartItem as CartItemType } from '@/types/cart.types'
 import {
@@ -104,6 +104,13 @@ export function CartItem({ item, onQtyChange, onRemove }: CartItemProps) {
                                 </span>
                             </div>
 
+                            {item.storeName && (
+                                <span className="text-[10px] text-gray-400 mt-1 block">
+                                    <Store className="inline h-2.5 w-2.5 mr-0.5" />
+                                    {item.storeName}
+                                </span>
+                            )}
+
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <p className="text-sm font-semibold text-[#166534]">{formatINR(item.price)} each</p>
                                 {isDiscounted && (
@@ -179,7 +186,7 @@ export function CartItem({ item, onQtyChange, onRemove }: CartItemProps) {
                             </p>
                         )}
                         <motion.p
-                            key={`${item.productId}-${item.quantity}`}
+                            key={`${item.shopProductId}-${item.quantity}`}
                             initial={reduceMotion ? false : { y: 10, opacity: 0 }}
                             animate={reduceMotion ? undefined : { y: 0, opacity: 1 }}
                             className="mt-1 text-[22px] font-bold tracking-[-0.04em] text-[#16202A]"
