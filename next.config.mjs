@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    eslint: {
+        // Don't fail production builds on lint errors.
+        // Linting still runs locally and in CI; this keeps Vercel deploys green.
+        ignoreDuringBuilds: true,
+    },
     images: {
         remotePatterns: [
             { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
