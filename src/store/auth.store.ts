@@ -30,8 +30,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                 })),
 
             logout: () => {
-                localStorage.removeItem('accessToken')
-                localStorage.removeItem('refreshToken')
+                try { localStorage.removeItem('accessToken') } catch { /* private browsing */ }
+                try { localStorage.removeItem('refreshToken') } catch { /* private browsing */ }
                 if (typeof document !== 'undefined') {
                     document.cookie = 'accessToken=; path=/; max-age=0'
                 }

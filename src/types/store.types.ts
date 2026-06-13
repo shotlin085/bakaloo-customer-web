@@ -26,7 +26,8 @@ export interface Store {
 export interface ServiceabilityResult {
     serviceable: boolean
     reason: string | null
-    stores: Store[]                // May be multiple for the same pincode/location
+    store?: StoreAllocation        // Primary allocated store for this location
+    stores: Store[]                // All serviceable stores (may be multiple)
     pincode: string
 }
 
@@ -38,6 +39,7 @@ export interface StoreAllocation {
     storeLogo: string | null
     storeStatus: StoreStatus
     serviceable: boolean
+    availabilityReason: string | null
     deliveryEta: number
     deliveryDistance: number
     minimumOrder: number

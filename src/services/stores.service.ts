@@ -85,6 +85,7 @@ export function primaryShopToAllocation(result: AllocationResult): StoreAllocati
         storeLogo: null,
         storeStatus: 'OPEN',   // default — store status resolved separately
         serviceable: true,
+        availabilityReason: null,
         deliveryEta: 30,       // default — real ETA from cart/summary
         deliveryDistance: primary.distance_km ?? 0,
         minimumOrder: 0,       // resolved from fee_settings

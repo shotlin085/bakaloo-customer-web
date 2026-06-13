@@ -41,7 +41,7 @@ export function normalizeProduct(raw: Record<string, unknown>): Product {
         shop_stock: raw.shop_stock != null ? Number(raw.shop_stock) : null,
         shop_is_active: (raw.shop_is_active as boolean) ?? null,
         // Family / options
-        family_id: (raw.family_id as string) ?? null,
+        family_id: ((raw.family_id ?? raw.product_family_id) as string) ?? null,
         option_label: (raw.option_label as string) ?? null,
         option_count: raw.option_count != null ? Number(raw.option_count) : null,
         net_quantity: (raw.net_quantity as string) ?? null,

@@ -22,14 +22,11 @@ export function useCart() {
     const qc = useQueryClient()
     const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
     const userId = useAuthStore((s) => s.user?.id ?? '')
-    const allocatedStoreId = useAllocatedStoreId()
     const cartStore = useCartStore()
 
-    // Use the composite key when both user and store are known
-    const cartKey =
-        isLoggedIn && userId && allocatedStoreId
-            ? keys.cart(userId, allocatedStoreId)
-            : keys.cartFallback()
+    // Use the simple cart key — cart API is scoped by JWT, not by storeId
+    // Using a stable key prevents double-fetching when allocatedStoreId changes
+    const cartKey = keys.cartFallback()
 
     const { data: cart, isLoading } = useQuery({
         queryKey: cartKey,
@@ -220,10 +217,10 @@ export function useCart() {
         isUpdating: updateMutation.isPending,
         removeFromCart: (shopProductId: string) => removeMutation.mutate(shopProductId),
         isRemoving: removeMutation.isPending,
-        getQty: (shopProductId: string) =>
-            cart?.items.find((i) => i.shopProductId === shopProductId)?.quantity ?? 0,
-        isInCart: (shopProductId: string) =>
-            (cart?.items.findIndex((i) => i.shopProductId === shopProductId) ?? -1) >= 0,
+        getQty: (productOrShopProductId: string) =>
+            cart?.items.find((i) => i.shopProductId === productOrShopProductId || i.productId === productOrShopProductId)?.quantity ?? 0,
+        isInCart: (productOrShopProductId: string) =>
+            (cart?.items.findIndex((i) => i.shopProductId === productOrShopProductId || i.productId === productOrShopProductId) ?? -1) >= 0,
 
         // Cross-store switch dialog
         pendingCrossStore,

@@ -29,7 +29,7 @@ interface StoreContextState {
     allocatedStoreId: string | null
     allocatedStoreName: string | null
     allocatedStoreSlug: string | null
-    storeLogo: string | null
+    storeLogo: string | null         // session-only — NOT persisted (REQ-1.7)
     storeStatus: StoreStatus | null
 
     // Delivery context (from allocation + cart/summary)
@@ -39,17 +39,23 @@ interface StoreContextState {
     selectedPincode: string | null
     selectedAddressId: string | null
 
+    // GPS coords — session-only, NOT persisted (REQ-1.7)
+    lat: number | null
+    lng: number | null
+
     // Serviceability
     serviceable: boolean
     availabilityReason: string | null
 
     // Resolution metadata
     lastResolvedAt: number | null
-    isResolving: boolean
-    resolutionError: string | null
+    isResolving: boolean             // session-only — NOT persisted (REQ-1.7)
+    resolutionError: string | null   // session-only — NOT persisted (REQ-1.7)
 
-    // Cross-user contamination guard
+    // Cross-user contamination guard (REQ-9.3, REQ-9.4)
     persistedUserId: string | null
+    /** Canonical alias used by downstream hooks (REQ-9.4) */
+    userId: string | null
 }
 
 interface StoreContextActions {
@@ -68,6 +74,19 @@ interface StoreContextActions {
         lng: number
         pincode: string
     }) => Promise<void>
+
+    /**
+     * Spec-aligned alias: resolve store from pincode or GPS coords.
+     * Routes to recomputeFromAddress or autoAssign depending on arguments.
+     * REQ-1.1, REQ-1.2
+     */
+    resolveStore: (pincode?: string, lat?: number, lng?: number) => Promise<void>
+
+    /**
+     * Spec-aligned alias: resolve store from a saved address ID.
+     * REQ-1.4
+     */
+    resolveFromAddress: (addressId: string) => Promise<void>
 
     /** Apply a pre-resolved allocation directly (e.g. from my-shops response). */
     setStoreFromAllocation: (allocation: StoreAllocation) => void
@@ -92,12 +111,15 @@ const INITIAL_STATE: StoreContextState = {
     minimumOrder: null,
     selectedPincode: null,
     selectedAddressId: null,
+    lat: null,
+    lng: null,
     serviceable: false,
     availabilityReason: null,
     lastResolvedAt: null,
     isResolving: false,
     resolutionError: null,
     persistedUserId: null,
+    userId: null,
 }
 
 export const useStoreContext = create<StoreContextStore>()(
@@ -212,11 +234,30 @@ export const useStoreContext = create<StoreContextStore>()(
             guardUserChange: (userId) => {
                 const { persistedUserId } = get()
                 if (persistedUserId && persistedUserId !== userId) {
-                    set({ ...INITIAL_STATE, persistedUserId: userId })
+                    set({ ...INITIAL_STATE, persistedUserId: userId, userId })
                     return true
                 }
-                set({ persistedUserId: userId })
+                set({ persistedUserId: userId, userId })
                 return false
+            },
+
+            // ── Spec-aligned aliases (REQ-1.1, REQ-1.2, REQ-1.4) ──────────────
+            resolveStore: async (pincode?: string, lat?: number, lng?: number) => {
+                if (lat !== undefined && lng !== undefined && pincode) {
+                    set({ lat, lng })
+                    await get().recomputeFromAddress({ lat, lng, pincode })
+                } else if (pincode) {
+                    // Pincode-only: store selectedPincode and trigger autoAssign
+                    set({ selectedPincode: pincode })
+                    await get().autoAssign()
+                } else {
+                    await get().autoAssign()
+                }
+            },
+
+            resolveFromAddress: async (addressId: string) => {
+                set({ selectedAddressId: addressId })
+                await get().autoAssign()
             },
         }),
         {
@@ -234,11 +275,15 @@ export const useStoreContext = create<StoreContextStore>()(
                 allocatedStoreSlug: s.allocatedStoreSlug,
                 storeStatus: s.storeStatus,
                 serviceable: s.serviceable,
+                availabilityReason: s.availabilityReason,
                 deliveryEta: s.deliveryEta,
+                deliveryDistance: s.deliveryDistance,
+                minimumOrder: s.minimumOrder,
                 selectedPincode: s.selectedPincode,
                 selectedAddressId: s.selectedAddressId,
                 lastResolvedAt: s.lastResolvedAt,
                 persistedUserId: s.persistedUserId,
+                userId: s.userId,
             }),
         },
     ),

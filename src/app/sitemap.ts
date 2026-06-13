@@ -1,7 +1,10 @@
 import type { MetadataRoute } from 'next'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bakaloo.in'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+const API_URL = (() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+    return base.endsWith('/api/v1') ? base : base.replace(/\/$/, '') + '/api/v1'
+})()
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticPages: MetadataRoute.Sitemap = [

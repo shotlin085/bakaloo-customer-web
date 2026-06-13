@@ -19,7 +19,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { guardUserChange, autoAssign } = useStoreContext()
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken')
+        let token: string | null = null
+        try { token = localStorage.getItem('accessToken') } catch { /* private browsing */ }
         if (!token) {
             setLoading(false)
             return

@@ -43,9 +43,9 @@ export interface Order {
     created_at: string
     updated_at: string
 
-    // Multi-vendor store attribution
-    shop_id?: string | null
-    shop_name?: string | null
+    // Multi-vendor store attribution — required per REQ-11.4
+    shop_id: string
+    shop_name: string
     store_slug?: string | null
 }
 

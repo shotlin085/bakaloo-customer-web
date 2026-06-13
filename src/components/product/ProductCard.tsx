@@ -155,14 +155,22 @@ export const ProductCard = React.memo(function ProductCard({
     variant = 'default',
 }: Props) {
     const { addToCart, updateQty, removeFromCart, getQty, isAdding, isUpdating } = useCart()
-    const qty = getQty(product.id)
-    const displayPrice = product.sale_price ?? product.price
+    // Use shopProductId when available (multi-vendor), fall back to product.id
+    const shopProductId = product.shop_product_id ?? product.id
+    const qty = getQty(shopProductId)
+    // Use shop_price if available, else sale_price, else price
+    const displayPrice = product.shop_price ?? product.sale_price ?? product.price
     const discount =
-        product.sale_price !== null && product.sale_price < product.price
-            ? discountPercent(product.price, product.sale_price)
-            : null
-    const max = product.max_order_qty ?? Math.min(product.stock_quantity, 10)
-    const outOfStock = product.stock_quantity === 0
+        product.shop_price != null && product.shop_price < product.price
+            ? discountPercent(product.price, product.shop_price)
+            : product.sale_price !== null && product.sale_price != null && product.sale_price < product.price
+              ? discountPercent(product.price, product.sale_price)
+              : null
+    const effectiveStock = product.shop_stock ?? product.stock_quantity
+    const max = product.max_order_qty ?? Math.min(effectiveStock, 10)
+    const outOfStock = effectiveStock === 0
+    // If shop_is_active is explicitly false, treat as unavailable
+    const isInactive = product.shop_is_active === false
     const displayTag = formatTagLabel(product)
 
     const imageSrc = cardUrl(product.thumbnail_url || product.images?.[0]) || '/placeholder-product.svg'
@@ -251,12 +259,12 @@ export const ProductCard = React.memo(function ProductCard({
                             product={product}
                             qty={qty}
                             max={max}
-                            outOfStock={outOfStock}
+                            outOfStock={outOfStock || isInactive}
                             isAdding={isAdding}
                             isUpdating={isUpdating}
-                            addToCart={addToCart}
-                            updateQty={updateQty}
-                            removeFromCart={removeFromCart}
+                            addToCart={(id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
+                            updateQty={(id, n) => updateQty(shopProductId, n)}
+                            removeFromCart={(id) => removeFromCart(shopProductId)}
                         />
                     </div>
                 </div>
@@ -349,12 +357,12 @@ export const ProductCard = React.memo(function ProductCard({
                         product={product}
                         qty={qty}
                         max={max}
-                        outOfStock={outOfStock}
+                        outOfStock={outOfStock || isInactive}
                         isAdding={isAdding}
                         isUpdating={isUpdating}
-                        addToCart={addToCart}
-                        updateQty={updateQty}
-                        removeFromCart={removeFromCart}
+                        addToCart={(id, n) => addToCart(shopProductId, n ?? 1, product.shop_id ?? undefined, product.shop_name ?? undefined)}
+                        updateQty={(id, n) => updateQty(shopProductId, n)}
+                        removeFromCart={(id) => removeFromCart(shopProductId)}
                     />
                 </div>
             </div>

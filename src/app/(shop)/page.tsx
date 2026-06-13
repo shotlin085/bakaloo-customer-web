@@ -14,54 +14,52 @@ import { HomeSectionHeader } from '@/components/home/HomeSectionHeader'
 import { HomeTrendingGrid } from '@/components/home/HomeTrendingGrid'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton'
-import { LocationRequired } from '@/components/shared/LocationRequired'
 import { LocationModal } from '@/components/store/LocationModal'
 import { keys, STALE } from '@/lib/queryKeys'
 import { useStoreContext } from '@/store/store.context'
 import { getHomepageCategoryGrid, getTrendingProducts } from '@/lib/shopfront/shopfront-home.utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MapPin } from 'lucide-react'
 import type { Category, Product } from '@/types/product.types'
 
 export default function HomePage() {
   const storeId = useStoreContext((s) => s.allocatedStoreId)
+  const storeName = useStoreContext((s) => s.allocatedStoreName)
+  const isResolving = useStoreContext((s) => s.isResolving)
   const hasStore = Boolean(storeId)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
 
+  // Always fetch — backend auto-scopes by JWT/allocation when available, global otherwise
   const { data: banners = [], isLoading: loadingBanners } = useQuery({
-    queryKey: keys.banners(storeId ?? ''),
+    queryKey: keys.banners(storeId ?? 'global'),
     queryFn: () => bannersService.getForStore(),
     staleTime: STALE.banners,
-    enabled: hasStore,
   })
 
   const { data: allCategories = [], isLoading: loadingCategories } = useQuery({
-    queryKey: keys.categories(storeId ?? ''),
+    queryKey: keys.categories(storeId ?? 'global'),
     queryFn: () => categoriesService.getForStore(),
     staleTime: STALE.categories,
-    enabled: hasStore,
   })
 
   const categories = getHomepageCategoryGrid(allCategories as Category[], 6)
 
   const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
-    queryKey: keys.featuredProducts(storeId ?? ''),
-    queryFn: () => productsService.getFeatured(12),
+    queryKey: keys.featuredProducts(storeId ?? 'global'),
+    queryFn: () => productsService.getFeatured(8),
     staleTime: STALE.products,
-    enabled: hasStore,
   })
 
   const { data: newArrivals = [], isLoading: loadingNewArrivals } = useQuery({
-    queryKey: keys.newArrivals(storeId ?? ''),
-    queryFn: () => productsService.getNewArrivals(12),
+    queryKey: keys.newArrivals(storeId ?? 'global'),
+    queryFn: () => productsService.getNewArrivals(8),
     staleTime: STALE.products,
-    enabled: hasStore,
   })
 
   const { data: dealProducts = [], isLoading: loadingDeals } = useQuery({
-    queryKey: keys.dealsProducts(storeId ?? ''),
-    queryFn: () => productsService.getDeals(12),
+    queryKey: keys.dealsProducts(storeId ?? 'global'),
+    queryFn: () => productsService.getDeals(8),
     staleTime: STALE.products,
-    enabled: hasStore,
   })
 
   const trendingProducts = getTrendingProducts({
@@ -73,13 +71,46 @@ export default function HomePage() {
 
   return (
     <div className="pb-8">
-      {!hasStore && !loadingBanners && !loadingCategories ? (
-        <>
-          <LocationRequired onSetLocation={() => setLocationModalOpen(true)} />
-          <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
-        </>
-      ) : (
-        <>
+      {/* Location nudge — shown when no store is allocated (non-blocking) */}
+      {!hasStore && !isResolving && (
+        <div className="mx-3 mt-3 sm:mx-4 lg:mx-6">
+          <button
+            type="button"
+            onClick={() => setLocationModalOpen(true)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50 px-4 py-3 text-left transition-colors hover:border-purple-200"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100">
+              <MapPin className="h-4 w-4 text-purple-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900">Set your delivery location</p>
+              <p className="text-xs text-gray-500">Get products available near you — tap to set your pincode</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white">
+              Set
+            </span>
+          </button>
+        </div>
+      )}
+
+      {hasStore && storeName && (
+        <div className="mx-3 mt-3 sm:mx-4 lg:mx-6">
+          <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2">
+            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <p className="text-xs font-medium text-green-800">
+              Products from <span className="font-bold">{storeName}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => setLocationModalOpen(true)}
+              className="ml-auto text-xs text-green-700 underline"
+            >
+              Change
+            </button>
+          </div>
+        </div>
+      )}
+
       {loadingBanners ? (
         <HomeHeroMosaicSkeleton />
       ) : banners.length > 0 ? (
@@ -95,7 +126,7 @@ export default function HomePage() {
       {loadingFeatured ? (
         <HomeFeatureGridSkeleton />
       ) : featuredProducts.length > 0 ? (
-        <HomeFeatureGrid products={featuredProducts.slice(0, 12)} />
+        <HomeFeatureGrid products={featuredProducts.slice(0, 8)} />
       ) : null}
 
       {loadingFeatured ? (
@@ -137,7 +168,7 @@ export default function HomePage() {
         <section className="px-3 home-section-spacing sm:px-4 lg:px-6">
           <HomeSectionHeader
             title="Weekly Picks"
-            subtitle="Current-value products pulled from the live deals feed without crowding the main merchandising."
+            subtitle="Current-value products pulled from the live deals feed."
             viewAllHref="/products"
             eyebrow="Deals"
           />
@@ -150,8 +181,8 @@ export default function HomePage() {
       )}
 
       {!loadingFeatured && featuredProducts.length === 0 && <AllProductsSection />}
-        </>
-      )}
+
+      <LocationModal open={locationModalOpen} onClose={() => setLocationModalOpen(false)} />
     </div>
   )
 }
@@ -198,7 +229,7 @@ function AllProductsSection() {
     <section className="px-3 home-section-spacing sm:px-4 lg:px-6">
       <HomeSectionHeader
         title="All Products"
-        subtitle="Fallback live catalog rendering when primary featured merchandising is unavailable."
+        subtitle="Explore our full catalog of fresh groceries."
         eyebrow="Catalog"
       />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">

@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, RotateCcw, Shield, Sparkles, Store, Truck, Users } from 'lucide-react'
 import { AddToCartSection } from '@/components/product/AddToCartSection'
+import { ProductFamilyOptions } from '@/components/product/ProductFamilyOptions'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/hooks/useCart'
 import { TrustRow } from '@/components/shared'
 import { discountPercent, formatINR } from '@/lib/utils'
 import { RatingStars } from '@/components/shared/RatingStars'
-import type { Product } from '@/types/product.types'
+import type { Product, ShopProduct } from '@/types/product.types'
 
 interface ProductInfoProps {
     product: Product
@@ -31,28 +32,33 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
     const router = useRouter()
     const { addToCart } = useCart()
     const [descExpanded, setDescExpanded] = useState(false)
+    // Variant selection state — starts with the current product's shopProductId
+    const [activeVariant, setActiveVariant] = useState<ShopProduct | null>(null)
 
-    const salePrice = product.shop_price ?? product.sale_price ?? product.salePrice ?? null
-    const isOnSale = salePrice !== null && salePrice < product.price
-    const displayPrice = isOnSale ? salePrice : product.price
-    const discount = isOnSale ? discountPercent(product.price, salePrice) : null
+    // Use active variant's fields if selected, otherwise fall through to current product
+    const displayProduct = activeVariant ?? product
+
+    const salePrice = displayProduct.shop_price ?? displayProduct.sale_price ?? displayProduct.salePrice ?? null
+    const isOnSale = salePrice !== null && salePrice < displayProduct.price
+    const displayPrice = isOnSale ? salePrice : displayProduct.price
+    const discount = isOnSale ? discountPercent(displayProduct.price, salePrice) : null
     const reviewCount = reviewSummary.totalReviews
     const averageRating = reviewSummary.averageRating
-    const effectiveStock = product.shop_stock ?? product.stock_quantity
+    const effectiveStock = displayProduct.shop_stock ?? displayProduct.stock_quantity
     const buyerCount = Math.max(
         reviewCount > 0 ? reviewCount * 3 : 0,
-        Math.min(product.total_sold, 1200),
+        Math.min(displayProduct.total_sold, 1200),
         effectiveStock > 0 ? 24 : 0,
     )
 
-    const shopProductId = product.shop_product_id ?? product.id
+    const shopProductId = displayProduct.shop_product_id ?? displayProduct.id
 
     const handleShopNow = () => {
         addToCart(
             shopProductId,
             1,
-            product.shop_id ?? undefined,
-            product.shop_name ?? undefined,
+            displayProduct.shop_id ?? undefined,
+            displayProduct.shop_name ?? undefined,
         )
         router.push('/cart')
     }
@@ -92,18 +98,27 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
 
             <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-[color:var(--shop-ink-muted)]">
-                    {product.unit}
+                    {displayProduct.unit}
                 </p>
                 <h1 className="text-[28px] font-extrabold leading-[1.15] text-[color:var(--shop-ink)] lg:text-[32px]">
-                    {product.name}
+                    {displayProduct.name}
                 </h1>
-                {product.shop_name && (
+                {displayProduct.shop_name && (
                     <p className="text-xs text-gray-500 mt-1">
                         <Store className="inline h-3 w-3 mr-1" />
-                        Sold by <span className="font-medium text-gray-700">{product.shop_name}</span>
+                        Sold by <span className="font-medium text-gray-700">{displayProduct.shop_name}</span>
                     </p>
                 )}
             </div>
+
+            {/* Family options — variant chip row (only when family_id present) */}
+            {product.family_id && (
+                <ProductFamilyOptions
+                    familyId={product.id}
+                    selectedShopProductId={shopProductId}
+                    onSelect={(variant) => setActiveVariant(variant)}
+                />
+            )}
 
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[color:var(--shop-border)] bg-white/80 px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -144,15 +159,15 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
                 </span>
                 {isOnSale && (
                     <span className="text-lg text-[color:var(--shop-ink-muted)] line-through">
-                        {formatINR(product.price)}
+                        {formatINR(displayProduct.price)}
                     </span>
                 )}
                 {discount && (
                     <span className="rounded-full bg-[var(--shop-seasonal-accent-wash)] px-3 py-1 text-[13px] font-semibold text-[color:var(--shop-primary)]">
-                        You save {formatINR(product.price - displayPrice)} ({discount}%)
+                        You save {formatINR(displayProduct.price - displayPrice)} ({discount}%)
                     </span>
                 )}
-                <span className="text-xs font-medium text-[color:var(--shop-ink-muted)]">Per {product.unit}</span>
+                <span className="text-xs font-medium text-[color:var(--shop-ink-muted)]">Per {displayProduct.unit}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -210,7 +225,7 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
                 ]}
             />
 
-            {product.description && (
+            {displayProduct.description && (
                 <div className="border-t border-[color:var(--shop-border)] pt-5">
                     <h3 className="mb-2 text-sm font-bold text-[color:var(--shop-ink)]">About this product</h3>
                     <div className="relative">
@@ -219,9 +234,9 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
                                 !descExpanded ? 'line-clamp-3' : ''
                             }`}
                         >
-                            {product.description}
+                            {displayProduct.description}
                         </p>
-                        {product.description.length > 150 && (
+                        {displayProduct.description.length > 150 && (
                             <button
                                 type="button"
                                 onClick={() => setDescExpanded((prev) => !prev)}
@@ -238,9 +253,9 @@ export function ProductInfo({ product, reviewSummary }: ProductInfoProps) {
                 </div>
             )}
 
-            {(product.tags?.length ?? 0) > 0 && (
+            {(displayProduct.tags?.length ?? 0) > 0 && (
                 <div className="flex flex-wrap gap-2">
-                    {product.tags.map((tag) => (
+                    {displayProduct.tags.map((tag) => (
                         <span key={tag} className="rounded-full bg-[var(--shop-seasonal-accent-wash)] px-3 py-1 text-xs text-[color:var(--shop-ink-muted)]">
                             {tag}
                         </span>

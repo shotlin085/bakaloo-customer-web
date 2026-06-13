@@ -113,11 +113,13 @@ export const cartService = {
     /**
      * Add item to cart.
      * POST /cart/items
-     * Body: { shopProductId, quantity }  OR  { productId, quantity }
-     * Backend accepts either — shopProductId is preferred for multi-vendor correctness.
+     * Body: { productId, quantity } — backend auto-resolves to shopProductId via JWT allocation.
+     * OR { shopProductId, quantity } — for explicit multi-vendor shop product targeting.
      */
-    addItem: async (shopProductId: string, quantity: number): Promise<Cart> => {
-        const { data } = await api.post('/cart/items', { shopProductId, quantity })
+    addItem: async (productOrShopProductId: string, quantity: number): Promise<Cart> => {
+        // Backend accepts both productId and shopProductId.
+        // We send productId as the primary key since featured/deals endpoints return master product IDs.
+        const { data } = await api.post('/cart/items', { productId: productOrShopProductId, quantity })
         return normalizeCart(data.data as RawCart)
     },
 

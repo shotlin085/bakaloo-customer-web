@@ -10,7 +10,11 @@ import { RecentlyViewedSection } from '@/components/product/RecentlyViewedSectio
 import { PageShell, SectionHeader } from '@/components/shared'
 import type { Product } from '@/types/product.types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+const API_URL = (() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+    // Normalize — ensure /api/v1 is included
+    return base.endsWith('/api/v1') ? base : base.replace(/\/$/, '') + '/api/v1'
+})()
 
 interface Params {
     params: { slug: string }
@@ -59,7 +63,7 @@ function normalizeProduct(raw: Record<string, unknown> | null): Product | null {
         shop_name: raw.shop_name != null ? String(raw.shop_name) : null,
         shop_price: raw.shop_price != null ? Number(raw.shop_price) : null,
         shop_stock: raw.shop_stock != null ? Number(raw.shop_stock) : null,
-        family_id: raw.family_id != null ? String(raw.family_id) : null,
+        family_id: (raw.family_id ?? raw.product_family_id) != null ? String(raw.family_id ?? raw.product_family_id) : null,
         option_label: raw.option_label != null ? String(raw.option_label) : null,
         net_quantity: raw.net_quantity != null ? String(raw.net_quantity) : null,
         avg_rating: raw.avg_rating != null ? Number(raw.avg_rating) : null,
@@ -149,7 +153,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
         title: `${product.name} — ₹${price} | Bakaloo`,
         description:
             product.description?.slice(0, 160) ||
-            `Buy ${product.name} at best price on Bakaloo. Fresh quality guaranteed.`,
+            `Buy ${product.name}${product.shop_name ? ` from ${product.shop_name}` : ''} at best price on Bakaloo. Fresh quality guaranteed.`,
         openGraph: {
             title: product.name,
             description:
